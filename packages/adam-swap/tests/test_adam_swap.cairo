@@ -23,15 +23,19 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, ContractAddres
     // 1. Deploy AdamToken (ADUSD)
     let token_class = declare("AdamToken").expect('Failed to declare AdamToken').contract_class();
     let mut adusd_calldata = array![];
-    "Adam US Dollar".serialize(ref adusd_calldata);
-    "ADUSD".serialize(ref adusd_calldata);
+    let adusd_name: ByteArray = "Adam US Dollar";
+    let adusd_symbol: ByteArray = "ADUSD";
+    adusd_name.serialize(ref adusd_calldata);
+    adusd_symbol.serialize(ref adusd_calldata);
     OWNER().serialize(ref adusd_calldata);
     let (adusd_address, _) = token_class.deploy(@adusd_calldata).unwrap();
 
     // 2. Deploy AdamToken (ADNGN)
     let mut adngn_calldata = array![];
-    "Adam Naira".serialize(ref adngn_calldata);
-    "ADNGN".serialize(ref adngn_calldata);
+    let adngn_name: ByteArray = "Adam Naira";
+    let adngn_symbol: ByteArray = "ADNGN";
+    adngn_name.serialize(ref adngn_calldata);
+    adngn_symbol.serialize(ref adngn_calldata);
     OWNER().serialize(ref adngn_calldata);
     let (adngn_address, _) = token_class.deploy(@adngn_calldata).unwrap();
 
