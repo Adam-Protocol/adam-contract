@@ -1,8 +1,0 @@
-[package]
-name = "adam_common"
-version = "0.1.0"
-edition = "2024_07"
-description = "Shared errors, events, and interfaces for Adam Protocol contracts"
-
-[dependencies]
-starknet.workspace = true
