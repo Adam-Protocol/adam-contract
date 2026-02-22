@@ -1,0 +1,19 @@
+{
+  "name": "adam-contract",
+  "version": "1.0.0",
+  "description": "Adam Protocol smart contracts and deployment scripts",
+  "scripts": {
+    "deploy": "ts-node scripts/deploy.ts",
+    "format": "prettier --write \"scripts/**/*.ts\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "starknet": "^6.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.7.0",
+    "prettier": "^3.4.0"
+  }
+}
