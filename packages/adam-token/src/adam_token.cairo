@@ -1,5 +1,11 @@
+use starknet::ContractAddress;
+
+pub const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
+pub const BURNER_ROLE: felt252 = selector!("BURNER_ROLE");
+pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
+pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+
 /// AdamToken — ERC-20 base deployed as ADUSD and ADNGN.
-/// Roles: MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, UPGRADER_ROLE — all granted to AdamSwap post-deploy.
 #[starknet::contract]
 pub mod AdamToken {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
@@ -9,12 +15,9 @@ pub mod AdamToken {
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::{ClassHash, ContractAddress};
-    use adam_common::errors::AdamErrors;
-
-    pub const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
-    pub const BURNER_ROLE: felt252 = selector!("BURNER_ROLE");
-    pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
-    pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+    use core::num::traits::Zero;
+    use crate::errors::Errors;
+    use super::{MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, UPGRADER_ROLE};
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
@@ -63,8 +66,6 @@ pub mod AdamToken {
         UpgradeableEvent: UpgradeableComponent::Event,
     }
 
-    /// Deploy once as ADUSD, once as ADNGN.
-    /// After deploy, grant MINTER_ROLE + BURNER_ROLE to AdamSwap.
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -72,7 +73,7 @@ pub mod AdamToken {
         symbol: ByteArray,
         owner: ContractAddress,
     ) {
-        assert(owner.is_non_zero(), AdamErrors::ZERO_ADDRESS);
+        assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
         self.erc20.initializer(name, symbol);
         self.accesscontrol.initializer();
         self.accesscontrol._grant_role(DEFAULT_ADMIN_ROLE, owner);
@@ -95,20 +96,18 @@ pub mod AdamToken {
     #[generate_trait]
     #[abi(per_item)]
     impl ExternalImpl of ExternalTrait {
-        /// Mint — MINTER_ROLE only (AdamSwap)
         #[external(v0)]
         fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) {
             self.accesscontrol.assert_only_role(MINTER_ROLE);
-            assert(amount > 0, AdamErrors::ZERO_AMOUNT);
-            assert(recipient.is_non_zero(), AdamErrors::ZERO_ADDRESS);
+            assert(amount > 0, Errors::ZERO_AMOUNT);
+            assert(!recipient.is_zero(), Errors::ZERO_ADDRESS);
             self.erc20.mint(recipient, amount);
         }
 
-        /// Burn — BURNER_ROLE only (AdamSwap)
         #[external(v0)]
         fn burn(ref self: ContractState, from: ContractAddress, amount: u256) {
             self.accesscontrol.assert_only_role(BURNER_ROLE);
-            assert(amount > 0, AdamErrors::ZERO_AMOUNT);
+            assert(amount > 0, Errors::ZERO_AMOUNT);
             self.erc20.burn(from, amount);
         }
 

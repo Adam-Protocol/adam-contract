@@ -2,20 +2,18 @@
 name = "adam_swap"
 version = "0.1.0"
 edition = "2024_07"
-description = "Adam Protocol exchange — buy/sell/swap with privacy commitments"
 
 [dependencies]
 starknet.workspace = true
 openzeppelin.workspace = true
-adam_common = { path = "../adam-common" }
-adam_pool   = { path = "../adam-pool" }
-adam_token  = { path = "../adam-token" }
+adam_token.workspace = true
+adam_pool.workspace = true
 
 [dev-dependencies]
 snforge_std.workspace = true
 
-[[target.starknet-contract]]
+[lib]
 sierra = true
 
-[scripts]
-test = "snforge test"
+[[target.starknet-contract]]
+sierra = true

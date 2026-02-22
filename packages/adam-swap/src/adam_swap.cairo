@@ -1,5 +1,13 @@
+use starknet::ContractAddress;
+
+pub const RATE_SETTER_ROLE: felt252 = selector!("RATE_SETTER_ROLE");
+pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
+pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+/// 1e18 — fixed-point precision for rates
+pub const RATE_PRECISION: u256 = 1_000_000_000_000_000_000_u256;
+pub const MAX_FEE_BPS: u16 = 1000; // 10%
+
 /// AdamSwap — core exchange contract (upgradeable).
-/// buy(), sell(), swap() — all emit privacy-safe events (no amounts on-chain).
 #[starknet::contract]
 pub mod AdamSwap {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
@@ -9,19 +17,18 @@ pub mod AdamSwap {
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::{ClassHash, ContractAddress, get_block_timestamp, get_caller_address};
-    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
-    use adam_common::errors::AdamErrors;
-    use adam_common::events::{BuyExecuted, SellExecuted, SwapExecuted, RateUpdated};
-    use adam_common::interfaces::{
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
+    use core::num::traits::Zero;
+    use crate::errors::Errors;
+    use crate::events::{BuyExecuted, SellExecuted, SwapExecuted, RateUpdated};
+    use crate::interfaces::{
         IAdamTokenDispatcher, IAdamTokenDispatcherTrait,
         IAdamPoolDispatcher, IAdamPoolDispatcherTrait,
     };
-
-    pub const RATE_SETTER_ROLE: felt252 = selector!("RATE_SETTER_ROLE");
-    pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
-    pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
-    pub const RATE_PRECISION: u256 = 1_000_000_000_000_000_000_u256; // 1e18
-    pub const MAX_FEE_BPS: u16 = 1000; // 10%
+    use super::{RATE_SETTER_ROLE, PAUSER_ROLE, UPGRADER_ROLE, RATE_PRECISION, MAX_FEE_BPS};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
@@ -84,13 +91,13 @@ pub mod AdamSwap {
         pool_address: ContractAddress,
         fee_bps: u16,
     ) {
-        assert(owner.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(treasury.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(usdc_address.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(adusd_address.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(adngn_address.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(pool_address.is_non_zero(), AdamErrors::ZERO_ADDRESS);
-        assert(fee_bps <= MAX_FEE_BPS, AdamErrors::INVALID_FEE);
+        assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!treasury.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!usdc_address.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!adusd_address.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!adngn_address.is_zero(), Errors::ZERO_ADDRESS);
+        assert(!pool_address.is_zero(), Errors::ZERO_ADDRESS);
+        assert(fee_bps <= MAX_FEE_BPS, Errors::INVALID_FEE);
 
         self.accesscontrol.initializer();
         self.accesscontrol._grant_role(DEFAULT_ADMIN_ROLE, owner);
@@ -105,7 +112,7 @@ pub mod AdamSwap {
         self.treasury.write(treasury);
         self.fee_bps.write(fee_bps);
 
-        // USDC <-> ADUSD is always 1:1 at init
+        // USDC <-> ADUSD starts at 1:1
         self.rates.write((usdc_address, adusd_address), RATE_PRECISION);
         self.rates.write((adusd_address, usdc_address), RATE_PRECISION);
     }
@@ -113,7 +120,6 @@ pub mod AdamSwap {
     #[generate_trait]
     #[abi(per_item)]
     impl ExternalImpl of ExternalTrait {
-        /// Buy ADUSD or ADNGN with USDC. Commitment computed client-side — amount never stored.
         #[external(v0)]
         fn buy(
             ref self: ContractState,
@@ -124,26 +130,28 @@ pub mod AdamSwap {
         ) {
             self.pausable.assert_not_paused();
             let caller = get_caller_address();
-            assert(amount_in > 0, AdamErrors::ZERO_AMOUNT);
-            assert(token_in == self.usdc_address.read(), AdamErrors::INVALID_TOKEN);
+            assert(amount_in > 0, Errors::ZERO_AMOUNT);
+            assert(token_in == self.usdc_address.read(), Errors::INVALID_TOKEN);
             assert(
                 token_out == self.adusd_address.read() || token_out == self.adngn_address.read(),
-                AdamErrors::INVALID_TOKEN,
+                Errors::INVALID_TOKEN,
             );
 
+            // Transfer USDC to treasury
             IERC20Dispatcher { contract_address: token_in }
                 .transfer_from(caller, self.treasury.read(), amount_in);
 
+            // Mint equivalent tokens after fee
             let amount_out = self._apply_rate_and_fee(token_in, token_out, amount_in);
             IAdamTokenDispatcher { contract_address: token_out }.mint(caller, amount_out);
 
+            // Register commitment on-chain (no amount included)
             IAdamPoolDispatcher { contract_address: self.pool_address.read() }
                 .register_commitment(commitment, token_out);
 
             self.emit(BuyExecuted { commitment, token_out, timestamp: get_block_timestamp() });
         }
 
-        /// Sell ADUSD/ADNGN — burns token, emits event so backend can trigger bank offramp.
         #[external(v0)]
         fn sell(
             ref self: ContractState,
@@ -154,15 +162,15 @@ pub mod AdamSwap {
         ) {
             self.pausable.assert_not_paused();
             let caller = get_caller_address();
-            assert(amount > 0, AdamErrors::ZERO_AMOUNT);
+            assert(amount > 0, Errors::ZERO_AMOUNT);
             assert(
                 token_in == self.adusd_address.read() || token_in == self.adngn_address.read(),
-                AdamErrors::INVALID_TOKEN,
+                Errors::INVALID_TOKEN,
             );
 
             let pool = IAdamPoolDispatcher { contract_address: self.pool_address.read() };
-            assert(pool.is_commitment_registered(commitment), AdamErrors::COMMITMENT_NOT_FOUND);
-            assert(!pool.is_nullifier_spent(nullifier), AdamErrors::NULLIFIER_SPENT);
+            assert(pool.is_commitment_registered(commitment), Errors::COMMITMENT_NOT_FOUND);
+            assert(!pool.is_nullifier_spent(nullifier), Errors::NULLIFIER_SPENT);
 
             IAdamTokenDispatcher { contract_address: token_in }.burn(caller, amount);
             pool.spend_nullifier(nullifier);
@@ -170,7 +178,6 @@ pub mod AdamSwap {
             self.emit(SellExecuted { nullifier, token_in, timestamp: get_block_timestamp() });
         }
 
-        /// Swap ADUSD <-> ADNGN using the rate last pushed by the backend.
         #[external(v0)]
         fn swap(
             ref self: ContractState,
@@ -182,17 +189,17 @@ pub mod AdamSwap {
         ) {
             self.pausable.assert_not_paused();
             let caller = get_caller_address();
-            assert(amount_in > 0, AdamErrors::ZERO_AMOUNT);
-            assert(token_in != token_out, AdamErrors::INVALID_TOKEN);
+            assert(amount_in > 0, Errors::ZERO_AMOUNT);
+            assert(token_in != token_out, Errors::INVALID_TOKEN);
             assert(
                 (token_in == self.adusd_address.read() && token_out == self.adngn_address.read())
                     || (token_in == self.adngn_address.read()
                         && token_out == self.adusd_address.read()),
-                AdamErrors::INVALID_TOKEN,
+                Errors::INVALID_TOKEN,
             );
 
             let amount_out = self._apply_rate_and_fee(token_in, token_out, amount_in);
-            assert(amount_out >= min_amount_out, AdamErrors::SLIPPAGE_EXCEEDED);
+            assert(amount_out >= min_amount_out, Errors::SLIPPAGE_EXCEEDED);
 
             IAdamTokenDispatcher { contract_address: token_in }.burn(caller, amount_in);
             IAdamTokenDispatcher { contract_address: token_out }.mint(caller, amount_out);
@@ -203,7 +210,6 @@ pub mod AdamSwap {
             self.emit(SwapExecuted { commitment, token_in, token_out, timestamp: get_block_timestamp() });
         }
 
-        /// Push live USD/NGN rate — RATE_SETTER_ROLE only (backend service wallet).
         #[external(v0)]
         fn set_rate(
             ref self: ContractState,
@@ -212,7 +218,7 @@ pub mod AdamSwap {
             rate: u256,
         ) {
             self.accesscontrol.assert_only_role(RATE_SETTER_ROLE);
-            assert(rate > 0, AdamErrors::ZERO_AMOUNT);
+            assert(rate > 0, Errors::ZERO_AMOUNT);
             self.rates.write((token_from, token_to), rate);
             self.emit(RateUpdated { token_from, token_to, rate, timestamp: get_block_timestamp() });
         }
@@ -220,7 +226,7 @@ pub mod AdamSwap {
         #[external(v0)]
         fn set_fee_bps(ref self: ContractState, fee_bps: u16) {
             self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
-            assert(fee_bps <= MAX_FEE_BPS, AdamErrors::INVALID_FEE);
+            assert(fee_bps <= MAX_FEE_BPS, Errors::INVALID_FEE);
             self.fee_bps.write(fee_bps);
         }
 
@@ -239,7 +245,7 @@ pub mod AdamSwap {
         #[external(v0)]
         fn get_rate(self: @ContractState, token_from: ContractAddress, token_to: ContractAddress) -> u256 {
             let rate = self.rates.read((token_from, token_to));
-            assert(rate > 0, AdamErrors::RATE_NOT_SET);
+            assert(rate > 0, Errors::RATE_NOT_SET);
             rate
         }
 
@@ -272,7 +278,7 @@ pub mod AdamSwap {
             amount_in: u256,
         ) -> u256 {
             let rate = self.rates.read((token_from, token_to));
-            assert(rate > 0, AdamErrors::RATE_NOT_SET);
+            assert(rate > 0, Errors::RATE_NOT_SET);
             let gross_out = (amount_in * rate) / RATE_PRECISION;
             let fee_bps: u256 = self.fee_bps.read().into();
             gross_out - (gross_out * fee_bps) / 10000_u256

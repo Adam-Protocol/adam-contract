@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "packages/adam-common",
     "packages/adam-token",
     "packages/adam-pool",
     "packages/adam-swap",
@@ -8,10 +7,11 @@ members = [
 
 [workspace.dependencies]
 starknet = "2.15.0"
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.21.0" }
-
-[workspace.dev-dependencies]
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.54.1" }
+openzeppelin = "2.0.0"
+snforge_std = "0.56.0"
+adam_token = { path = "packages/adam-token" }
+adam_pool = { path = "packages/adam-pool" }
+adam_swap = { path = "packages/adam-swap" }
 
 [tool.scarb]
 allow-prebuilt-plugins = ["snforge_std"]

@@ -2,18 +2,16 @@
 name = "adam_pool"
 version = "0.1.0"
 edition = "2024_07"
-description = "Adam Protocol nullifier registry — prevents double-spend across all flows"
 
 [dependencies]
 starknet.workspace = true
 openzeppelin.workspace = true
-adam_common = { path = "../adam-common" }
 
 [dev-dependencies]
 snforge_std.workspace = true
 
-[[target.starknet-contract]]
+[lib]
 sierra = true
 
-[scripts]
-test = "snforge test"
+[[target.starknet-contract]]
+sierra = true

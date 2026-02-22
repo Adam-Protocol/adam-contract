@@ -1,5 +1,8 @@
+use starknet::ContractAddress;
+
+pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+
 /// AdamPool — nullifier registry (upgradeable).
-/// Authorised swap contract is the only caller for register_commitment / spend_nullifier.
 #[starknet::contract]
 pub mod AdamPool {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
@@ -7,11 +10,14 @@ pub mod AdamPool {
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::{ClassHash, ContractAddress, get_block_timestamp, get_caller_address};
-    use starknet::storage::{Map, StorageMapReadAccess, StorageMapWriteAccess};
-    use adam_common::errors::AdamErrors;
-    use adam_common::events::{CommitmentRegistered, NullifierSpent};
-
-    pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+    use starknet::storage::{
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
+    };
+    use core::num::traits::Zero;
+    use crate::errors::Errors;
+    use crate::events::{CommitmentRegistered, NullifierSpent};
+    use super::UPGRADER_ROLE;
 
     component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
@@ -51,7 +57,7 @@ pub mod AdamPool {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress) {
-        assert(owner.is_non_zero(), AdamErrors::ZERO_ADDRESS);
+        assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
         self.accesscontrol.initializer();
         self.accesscontrol._grant_role(DEFAULT_ADMIN_ROLE, owner);
         self.accesscontrol._grant_role(UPGRADER_ROLE, owner);
@@ -63,7 +69,7 @@ pub mod AdamPool {
         #[external(v0)]
         fn register_commitment(ref self: ContractState, commitment: felt252, token: ContractAddress) {
             self._assert_only_swap();
-            assert(!self.commitments.read(commitment), AdamErrors::COMMITMENT_EXISTS);
+            assert(!self.commitments.read(commitment), Errors::COMMITMENT_EXISTS);
             self.commitments.write(commitment, true);
             self.emit(CommitmentRegistered { commitment, token, timestamp: get_block_timestamp() });
         }
@@ -71,7 +77,7 @@ pub mod AdamPool {
         #[external(v0)]
         fn spend_nullifier(ref self: ContractState, nullifier: felt252) {
             self._assert_only_swap();
-            assert(!self.nullifiers.read(nullifier), AdamErrors::NULLIFIER_SPENT);
+            assert(!self.nullifiers.read(nullifier), Errors::NULLIFIER_SPENT);
             self.nullifiers.write(nullifier, true);
             self.emit(NullifierSpent { nullifier, timestamp: get_block_timestamp() });
         }
@@ -79,7 +85,7 @@ pub mod AdamPool {
         #[external(v0)]
         fn set_swap_contract(ref self: ContractState, swap_contract: ContractAddress) {
             self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
-            assert(swap_contract.is_non_zero(), AdamErrors::ZERO_ADDRESS);
+            assert(!swap_contract.is_zero(), Errors::ZERO_ADDRESS);
             self.swap_contract.write(swap_contract);
         }
 
@@ -105,7 +111,7 @@ pub mod AdamPool {
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn _assert_only_swap(self: @ContractState) {
-            assert(get_caller_address() == self.swap_contract.read(), AdamErrors::UNAUTHORIZED);
+            assert(get_caller_address() == self.swap_contract.read(), Errors::UNAUTHORIZED);
         }
     }
 }
