@@ -7,6 +7,7 @@ use adam_token::adam_token::{AdamToken, MINTER_ROLE};
 fn OWNER() -> ContractAddress { starknet::contract_address_const::<'OWNER'>() }
 
 fn deploy_token() -> (ContractAddress, IAdamTokenDispatcher) {
+    let contract_class = declare("AdamToken").expect('Failed to declare AdamToken').contract_class();
     let mut constructor_calldata = array![];
     let name: ByteArray = "Adam US Dollar";
     let symbol: ByteArray = "ADUSD";
