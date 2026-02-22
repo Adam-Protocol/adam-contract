@@ -8,7 +8,7 @@ members = [
 [workspace.dependencies]
 starknet = "2.15.0"
 openzeppelin = "2.0.0"
-snforge_std = "0.56.0"
+snforge_std = "0.54.1"
 adam_token = { path = "packages/adam-token" }
 adam_pool = { path = "packages/adam-pool" }
 adam_swap = { path = "packages/adam-swap" }
