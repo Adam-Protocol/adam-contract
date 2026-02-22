@@ -1,5 +1,5 @@
-/// AdamToken — reusable ERC-20 base deployed as ADUSD and ADNGN.
-/// Roles: MINTER_ROLE (AdamSwap), BURNER_ROLE (AdamSwap), DEFAULT_ADMIN_ROLE (deployer).
+/// AdamToken — ERC-20 base deployed as ADUSD and ADNGN.
+/// Roles: MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, UPGRADER_ROLE — all granted to AdamSwap post-deploy.
 #[starknet::contract]
 pub mod AdamToken {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
@@ -8,8 +8,8 @@ pub mod AdamToken {
     use openzeppelin::token::erc20::{DefaultConfig, ERC20Component};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use starknet::{ClassHash, ContractAddress, get_caller_address};
-    use adam_contract::errors::AdamErrors;
+    use starknet::{ClassHash, ContractAddress};
+    use adam_common::errors::AdamErrors;
 
     pub const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
     pub const BURNER_ROLE: felt252 = selector!("BURNER_ROLE");
@@ -27,8 +27,7 @@ pub mod AdamToken {
     #[abi(embed_v0)]
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     #[abi(embed_v0)]
-    impl AccessControlMixinImpl =
-        AccessControlComponent::AccessControlMixinImpl<ContractState>;
+    impl AccessControlMixinImpl = AccessControlComponent::AccessControlMixinImpl<ContractState>;
 
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
@@ -64,7 +63,8 @@ pub mod AdamToken {
         UpgradeableEvent: UpgradeableComponent::Event,
     }
 
-    /// Deploy once as ADUSD, once as ADNGN. Owner grants MINTER/BURNER to AdamSwap post-deploy.
+    /// Deploy once as ADUSD, once as ADNGN.
+    /// After deploy, grant MINTER_ROLE + BURNER_ROLE to AdamSwap.
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -95,7 +95,7 @@ pub mod AdamToken {
     #[generate_trait]
     #[abi(per_item)]
     impl ExternalImpl of ExternalTrait {
-        /// Mint tokens — only callable by MINTER_ROLE (AdamSwap contract)
+        /// Mint — MINTER_ROLE only (AdamSwap)
         #[external(v0)]
         fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) {
             self.accesscontrol.assert_only_role(MINTER_ROLE);
@@ -104,7 +104,7 @@ pub mod AdamToken {
             self.erc20.mint(recipient, amount);
         }
 
-        /// Burn tokens — only callable by BURNER_ROLE (AdamSwap contract)
+        /// Burn — BURNER_ROLE only (AdamSwap)
         #[external(v0)]
         fn burn(ref self: ContractState, from: ContractAddress, amount: u256) {
             self.accesscontrol.assert_only_role(BURNER_ROLE);

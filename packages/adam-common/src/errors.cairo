@@ -1,4 +1,4 @@
-/// Custom error constants for Adam Protocol contracts
+/// Shared error constants for all Adam Protocol contracts
 pub mod AdamErrors {
     pub const UNAUTHORIZED: felt252 = 'adam: unauthorized';
     pub const ZERO_AMOUNT: felt252 = 'adam: zero amount';

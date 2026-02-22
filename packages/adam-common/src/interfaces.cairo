@@ -1,9 +1,7 @@
 use starknet::ContractAddress;
 
-/// Interface for AdamToken (ADUSD / ADNGN)
 #[starknet::interface]
 pub trait IAdamToken<TState> {
-    // ERC-20 standard
     fn name(self: @TState) -> ByteArray;
     fn symbol(self: @TState) -> ByteArray;
     fn decimals(self: @TState) -> u8;
@@ -13,14 +11,12 @@ pub trait IAdamToken<TState> {
     fn transfer(ref self: TState, recipient: ContractAddress, amount: u256) -> bool;
     fn transfer_from(ref self: TState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
     fn approve(ref self: TState, spender: ContractAddress, amount: u256) -> bool;
-    // Privileged
     fn mint(ref self: TState, recipient: ContractAddress, amount: u256);
     fn burn(ref self: TState, from: ContractAddress, amount: u256);
     fn pause(ref self: TState);
     fn unpause(ref self: TState);
 }
 
-/// Interface for AdamPool (nullifier registry)
 #[starknet::interface]
 pub trait IAdamPool<TState> {
     fn register_commitment(ref self: TState, commitment: felt252, token: ContractAddress);
@@ -30,43 +26,19 @@ pub trait IAdamPool<TState> {
     fn set_swap_contract(ref self: TState, swap_contract: ContractAddress);
 }
 
-/// Interface for AdamSwap
 #[starknet::interface]
 pub trait IAdamSwap<TState> {
-    // Core flows
-    fn buy(
-        ref self: TState,
-        token_in: ContractAddress,   // must be USDC
-        amount_in: u256,
-        token_out: ContractAddress,  // ADUSD or ADNGN
-        commitment: felt252,
-    );
-    fn sell(
-        ref self: TState,
-        token_in: ContractAddress,   // ADUSD or ADNGN
-        amount: u256,
-        nullifier: felt252,
-        commitment: felt252,
-    );
-    fn swap(
-        ref self: TState,
-        token_in: ContractAddress,
-        amount_in: u256,
-        token_out: ContractAddress,
-        min_amount_out: u256,
-        commitment: felt252,
-    );
-    // Rate management (owner only — backend pushes ExchangeRate-API value)
+    fn buy(ref self: TState, token_in: ContractAddress, amount_in: u256, token_out: ContractAddress, commitment: felt252);
+    fn sell(ref self: TState, token_in: ContractAddress, amount: u256, nullifier: felt252, commitment: felt252);
+    fn swap(ref self: TState, token_in: ContractAddress, amount_in: u256, token_out: ContractAddress, min_amount_out: u256, commitment: felt252);
     fn set_rate(ref self: TState, token_from: ContractAddress, token_to: ContractAddress, rate: u256);
     fn set_fee_bps(ref self: TState, fee_bps: u16);
-    // Views
     fn get_rate(self: @TState, token_from: ContractAddress, token_to: ContractAddress) -> u256;
     fn get_fee_bps(self: @TState) -> u16;
     fn get_usdc_address(self: @TState) -> ContractAddress;
     fn get_adusd_address(self: @TState) -> ContractAddress;
     fn get_adngn_address(self: @TState) -> ContractAddress;
     fn get_pool_address(self: @TState) -> ContractAddress;
-    // Emergency
     fn pause(ref self: TState);
     fn unpause(ref self: TState);
 }

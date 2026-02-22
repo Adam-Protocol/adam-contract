@@ -1,6 +1,6 @@
 use starknet::ContractAddress;
 
-// ── AdamToken events ────────────────────────────────────────────────
+// ── AdamToken events ────────────────────────────────────────────────────────
 #[derive(Drop, starknet::Event)]
 pub struct TokenMinted {
     #[key]
@@ -15,7 +15,7 @@ pub struct TokenBurned {
     pub amount: u256,
 }
 
-// ── AdamSwap events (privacy-preserving — no amounts on buy/sell/swap) ──
+// ── AdamSwap events — privacy-preserving (no amounts emitted) ───────────────
 #[derive(Drop, starknet::Event)]
 pub struct BuyExecuted {
     #[key]
@@ -49,7 +49,7 @@ pub struct RateUpdated {
     pub timestamp: u64,
 }
 
-// ── AdamPool events ────────────────────────────────────────────────
+// ── AdamPool events ─────────────────────────────────────────────────────────
 #[derive(Drop, starknet::Event)]
 pub struct CommitmentRegistered {
     #[key]
