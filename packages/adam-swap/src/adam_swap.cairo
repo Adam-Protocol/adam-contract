@@ -10,25 +10,25 @@ pub const MAX_FEE_BPS: u16 = 1000; // 10%
 /// AdamSwap — core exchange contract (upgradeable).
 #[starknet::contract]
 pub mod AdamSwap {
+    use core::num::traits::Zero;
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
-    use starknet::{ClassHash, ContractAddress, get_block_timestamp, get_caller_address};
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
         StoragePointerWriteAccess,
     };
-    use core::num::traits::Zero;
+    use starknet::{ClassHash, ContractAddress, get_block_timestamp, get_caller_address};
     use crate::errors::Errors;
-    use crate::events::{BuyExecuted, SellExecuted, SwapExecuted, RateUpdated};
+    use crate::events::{BuyExecuted, RateUpdated, SellExecuted, SwapExecuted};
     use crate::interfaces::{
-        IAdamTokenDispatcher, IAdamTokenDispatcherTrait,
-        IAdamPoolDispatcher, IAdamPoolDispatcherTrait,
+        IAdamPoolDispatcher, IAdamPoolDispatcherTrait, IAdamTokenDispatcher,
+        IAdamTokenDispatcherTrait,
     };
-    use super::{RATE_SETTER_ROLE, PAUSER_ROLE, UPGRADER_ROLE, RATE_PRECISION, MAX_FEE_BPS};
+    use super::{MAX_FEE_BPS, PAUSER_ROLE, RATE_PRECISION, RATE_SETTER_ROLE, UPGRADER_ROLE};
 
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
@@ -38,7 +38,8 @@ pub mod AdamSwap {
     #[abi(embed_v0)]
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     #[abi(embed_v0)]
-    impl AccessControlMixinImpl = AccessControlComponent::AccessControlMixinImpl<ContractState>;
+    impl AccessControlMixinImpl =
+        AccessControlComponent::AccessControlMixinImpl<ContractState>;
 
     impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
     impl AccessControlInternalImpl = AccessControlComponent::InternalImpl<ContractState>;
@@ -46,12 +47,18 @@ pub mod AdamSwap {
 
     #[storage]
     struct Storage {
+        // External stablecoin address (e.g., USDC)
         usdc_address: ContractAddress,
+        // Adam Protocol stablecoin addresses
         adusd_address: ContractAddress,
         adngn_address: ContractAddress,
+        // Repository for commitments and nullifiers
         pool_address: ContractAddress,
+        // Address where protocol fees are sent
         treasury: ContractAddress,
+        // Transaction fee in basis points (1/100th of a percent)
         fee_bps: u16,
+        // Exchange rates between token pairs
         rates: Map<(ContractAddress, ContractAddress), u256>,
         #[substorage(v0)]
         pausable: PausableComponent::Storage,
@@ -66,9 +73,13 @@ pub mod AdamSwap {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
+        // Fired when a user buys Adam stablecoins with USDC
         BuyExecuted: BuyExecuted,
+        // Fired when a user sells Adam stablecoins back to USDC
         SellExecuted: SellExecuted,
+        // Fired when a user swaps between different Adam stablecoins
         SwapExecuted: SwapExecuted,
+        // Fired when an admin updates the exchange rate
         RateUpdated: RateUpdated,
         #[flat]
         PausableEvent: PausableComponent::Event,
@@ -120,6 +131,8 @@ pub mod AdamSwap {
     #[generate_trait]
     #[abi(per_item)]
     impl ExternalImpl of ExternalTrait {
+        /// Allows users to buy Adam stablecoins using USDC.
+        /// Transfers USDC to treasury, mints Adam tokens, and registers commitment.
         #[external(v0)]
         fn buy(
             ref self: ContractState,
@@ -152,6 +165,8 @@ pub mod AdamSwap {
             self.emit(BuyExecuted { commitment, token_out, timestamp: get_block_timestamp() });
         }
 
+        /// Allows users to sell Adam stablecoins and spend a nullifier.
+        /// Burns the input tokens and marks the nullifier as spent in the pool.
         #[external(v0)]
         fn sell(
             ref self: ContractState,
@@ -207,7 +222,12 @@ pub mod AdamSwap {
             IAdamPoolDispatcher { contract_address: self.pool_address.read() }
                 .register_commitment(commitment, token_out);
 
-            self.emit(SwapExecuted { commitment, token_in, token_out, timestamp: get_block_timestamp() });
+            self
+                .emit(
+                    SwapExecuted {
+                        commitment, token_in, token_out, timestamp: get_block_timestamp(),
+                    },
+                );
         }
 
         #[external(v0)]
@@ -223,6 +243,8 @@ pub mod AdamSwap {
             self.emit(RateUpdated { token_from, token_to, rate, timestamp: get_block_timestamp() });
         }
 
+        /// Sets the transaction fee in basis points.
+        /// Requires DEFAULT_ADMIN_ROLE.
         #[external(v0)]
         fn set_fee_bps(ref self: ContractState, fee_bps: u16) {
             self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
@@ -230,35 +252,52 @@ pub mod AdamSwap {
             self.fee_bps.write(fee_bps);
         }
 
+        /// Pauses the swap contract.
+        /// Requires PAUSER_ROLE.
         #[external(v0)]
         fn pause(ref self: ContractState) {
             self.accesscontrol.assert_only_role(PAUSER_ROLE);
             self.pausable.pause();
         }
 
+        /// Unpauses the swap contract.
+        /// Requires PAUSER_ROLE.
         #[external(v0)]
         fn unpause(ref self: ContractState) {
             self.accesscontrol.assert_only_role(PAUSER_ROLE);
             self.pausable.unpause();
         }
 
+        /// Fetches the current exchange rate for a token pair.
         #[external(v0)]
-        fn get_rate(self: @ContractState, token_from: ContractAddress, token_to: ContractAddress) -> u256 {
+        fn get_rate(
+            self: @ContractState, token_from: ContractAddress, token_to: ContractAddress,
+        ) -> u256 {
             let rate = self.rates.read((token_from, token_to));
             assert(rate > 0, Errors::RATE_NOT_SET);
             rate
         }
 
         #[external(v0)]
-        fn get_fee_bps(self: @ContractState) -> u16 { self.fee_bps.read() }
+        fn get_fee_bps(self: @ContractState) -> u16 {
+            self.fee_bps.read()
+        }
         #[external(v0)]
-        fn get_usdc_address(self: @ContractState) -> ContractAddress { self.usdc_address.read() }
+        fn get_usdc_address(self: @ContractState) -> ContractAddress {
+            self.usdc_address.read()
+        }
         #[external(v0)]
-        fn get_adusd_address(self: @ContractState) -> ContractAddress { self.adusd_address.read() }
+        fn get_adusd_address(self: @ContractState) -> ContractAddress {
+            self.adusd_address.read()
+        }
         #[external(v0)]
-        fn get_adngn_address(self: @ContractState) -> ContractAddress { self.adngn_address.read() }
+        fn get_adngn_address(self: @ContractState) -> ContractAddress {
+            self.adngn_address.read()
+        }
         #[external(v0)]
-        fn get_pool_address(self: @ContractState) -> ContractAddress { self.pool_address.read() }
+        fn get_pool_address(self: @ContractState) -> ContractAddress {
+            self.pool_address.read()
+        }
     }
 
     #[abi(embed_v0)]
