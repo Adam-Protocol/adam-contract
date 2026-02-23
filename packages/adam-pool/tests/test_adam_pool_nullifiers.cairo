@@ -1,4 +1,3 @@
-use adam_pool::adam_pool::AdamPool;
 use adam_pool::interfaces::{IAdamPoolDispatcher, IAdamPoolDispatcherTrait};
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
@@ -12,9 +11,6 @@ fn OWNER() -> ContractAddress {
 fn SWAP() -> ContractAddress {
     starknet::contract_address_const::<'SWAP'>()
 }
-fn ALICE() -> ContractAddress {
-    starknet::contract_address_const::<'ALICE'>()
-}
 
 fn deploy_pool() -> (ContractAddress, IAdamPoolDispatcher) {
     let contract_class = declare("AdamPool").expect('Failed to declare AdamPool').contract_class();
@@ -25,27 +21,44 @@ fn deploy_pool() -> (ContractAddress, IAdamPoolDispatcher) {
 }
 
 #[test]
-fn test_registration() {
+fn test_nullifier_lifecycle() {
     let (address, dispatcher) = deploy_pool();
 
     start_cheat_caller_address(address, OWNER());
     dispatcher.set_swap_contract(SWAP());
     stop_cheat_caller_address(address);
 
-    let commitment: felt252 = 0x123.into();
-    let token: ContractAddress = ALICE();
+    let nullifier: felt252 = 0x456.into();
+
+    assert(!dispatcher.is_nullifier_spent(nullifier), 'should not be spent yet');
 
     start_cheat_caller_address(address, SWAP());
-    dispatcher.register_commitment(commitment, token);
+    dispatcher.spend_nullifier(nullifier);
+    stop_cheat_caller_address(address);
 
-    assert(dispatcher.is_commitment_registered(commitment), 'commitment should be registered');
+    assert(dispatcher.is_nullifier_spent(nullifier), 'should be spent');
+}
+
+#[test]
+#[should_panic(expected: ('adam: nullifier spent',))]
+fn test_cannot_spend_twice() {
+    let (address, dispatcher) = deploy_pool();
+
+    start_cheat_caller_address(address, OWNER());
+    dispatcher.set_swap_contract(SWAP());
+    stop_cheat_caller_address(address);
+
+    let nullifier: felt252 = 0x456.into();
+
+    start_cheat_caller_address(address, SWAP());
+    dispatcher.spend_nullifier(nullifier);
+    dispatcher.spend_nullifier(nullifier);
 }
 
 #[test]
 #[should_panic(expected: ('adam: unauthorized',))]
-fn test_register_unauthorized() {
+fn test_spend_unauthorized() {
     let (address, dispatcher) = deploy_pool();
-    let commitment: felt252 = 0x123.into();
-    let token: ContractAddress = ALICE();
-    dispatcher.register_commitment(commitment, token);
+    let nullifier: felt252 = 0x456.into();
+    dispatcher.spend_nullifier(nullifier);
 }

@@ -8,6 +8,8 @@ pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 /// AdamToken — ERC-20 base deployed as ADUSD and ADNGN.
 #[starknet::contract]
 pub mod AdamToken {
+    // OpenZeppelin imports for standard token functionality and security
+    use core::num::traits::Zero;
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
@@ -15,10 +17,10 @@ pub mod AdamToken {
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::{ClassHash, ContractAddress};
-    use core::num::traits::Zero;
     use crate::errors::Errors;
-    use super::{MINTER_ROLE, BURNER_ROLE, PAUSER_ROLE, UPGRADER_ROLE};
+    use super::{BURNER_ROLE, MINTER_ROLE, PAUSER_ROLE, UPGRADER_ROLE};
 
+    // Components used for access control, state management, and upgrades
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
     component!(path: PausableComponent, storage: pausable, event: PausableEvent);
     component!(path: AccessControlComponent, storage: accesscontrol, event: AccessControlEvent);
@@ -30,7 +32,8 @@ pub mod AdamToken {
     #[abi(embed_v0)]
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     #[abi(embed_v0)]
-    impl AccessControlMixinImpl = AccessControlComponent::AccessControlMixinImpl<ContractState>;
+    impl AccessControlMixinImpl =
+        AccessControlComponent::AccessControlMixinImpl<ContractState>;
 
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
     impl PausableInternalImpl = PausableComponent::InternalImpl<ContractState>;
@@ -39,14 +42,19 @@ pub mod AdamToken {
 
     #[storage]
     struct Storage {
+        // Core ERC20 storage component
         #[substorage(v0)]
         erc20: ERC20Component::Storage,
+        // Pausable state for emergency stops
         #[substorage(v0)]
         pausable: PausableComponent::Storage,
+        // Access control management for roles
         #[substorage(v0)]
         accesscontrol: AccessControlComponent::Storage,
+        // Introspection implementation
         #[substorage(v0)]
         src5: SRC5Component::Storage,
+        // Upgradeable contract state
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
     }
@@ -68,15 +76,17 @@ pub mod AdamToken {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState,
-        name: ByteArray,
-        symbol: ByteArray,
-        owner: ContractAddress,
+        ref self: ContractState, name: ByteArray, symbol: ByteArray, owner: ContractAddress,
     ) {
         assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
+
+        // Initialize ERC20 and AccessControl components
         self.erc20.initializer(name, symbol);
         self.accesscontrol.initializer();
+
+        // Grant all initial roles to the owner
         self.accesscontrol._grant_role(DEFAULT_ADMIN_ROLE, owner);
+        self.accesscontrol._grant_role(MINTER_ROLE, owner);
         self.accesscontrol._grant_role(PAUSER_ROLE, owner);
         self.accesscontrol._grant_role(UPGRADER_ROLE, owner);
     }
@@ -111,12 +121,16 @@ pub mod AdamToken {
             self.erc20.burn(from, amount);
         }
 
+        /// Pauses all token transfers and actions.
+        /// Requires PAUSER_ROLE.
         #[external(v0)]
         fn pause(ref self: ContractState) {
             self.accesscontrol.assert_only_role(PAUSER_ROLE);
             self.pausable.pause();
         }
 
+        /// Unpauses token actions.
+        /// Requires PAUSER_ROLE.
         #[external(v0)]
         fn unpause(ref self: ContractState) {
             self.accesscontrol.assert_only_role(PAUSER_ROLE);
