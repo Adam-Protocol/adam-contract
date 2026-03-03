@@ -44,10 +44,7 @@ pub trait IAdamSwap<TState> {
         commitment: felt252,
     );
     fn set_rate(
-        ref self: TState,
-        token_from: ContractAddress,
-        token_to: ContractAddress,
-        rate: u256,
+        ref self: TState, token_from: ContractAddress, token_to: ContractAddress, rate: u256,
     );
     fn set_fee_bps(ref self: TState, fee_bps: u16);
     fn get_rate(self: @TState, token_from: ContractAddress, token_to: ContractAddress) -> u256;
