@@ -1,5 +1,10 @@
 target/
 .snfoundry_cache/
+node_modules/
+dist/
+deployment_logs/
+*.log
 
 node_modules/
 
+.env*

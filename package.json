@@ -1,19 +1,16 @@
 {
   "name": "adam-contract",
   "version": "1.0.0",
-  "description": "Adam Protocol smart contracts and deployment scripts",
+  "description": "Adam Protocol Starknet Contracts",
   "scripts": {
     "deploy": "ts-node scripts/deploy.ts",
-    "format": "prettier --write \"scripts/**/*.ts\""
-  },
-  "dependencies": {
-    "dotenv": "^16.4.0",
-    "starknet": "^6.11.0"
+    "deploy:sepolia": "ts-node scripts/deploy.ts --network sepolia",
+    "deploy:mainnet": "ts-node scripts/deploy.ts --network mainnet"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^20.0.0",
+    "dotenv": "^16.0.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.7.0",
-    "prettier": "^3.4.0"
+    "typescript": "^5.0.0"
   }
 }
