@@ -3,7 +3,7 @@ use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
     stop_cheat_caller_address,
 };
-use starknet::ContractAddress;
+use starknet::{ContractAddress, SyscallResultTrait};
 
 fn OWNER() -> ContractAddress {
     starknet::contract_address_const::<'OWNER'>()
@@ -16,7 +16,7 @@ fn deploy_pool() -> (ContractAddress, IAdamPoolDispatcher) {
     let contract_class = declare("AdamPool").expect('Failed to declare AdamPool').contract_class();
     let mut constructor_calldata = array![];
     OWNER().serialize(ref constructor_calldata);
-    let (contract_address, _) = contract_class.deploy(@constructor_calldata).unwrap();
+    let (contract_address, _) = contract_class.deploy(@constructor_calldata).unwrap_syscall();
     (contract_address, IAdamPoolDispatcher { contract_address })
 }
 
