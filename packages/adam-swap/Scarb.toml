@@ -16,4 +16,5 @@ snforge_std.workspace = true
 sierra = true
 
 [[target.starknet-contract]]
+name = "adam_swap"
 sierra = true
