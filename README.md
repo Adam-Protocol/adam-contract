@@ -68,14 +68,48 @@ cd packages/adam_token && snforge test
 
 ## Deployment
 
-Deployment is handled via a TypeScript script using `Starknet.js`.
+### Quick Start
 
-1. Install dependencies: `npm install`
-2. Configure `.env` with `DEPLOYER_ADDRESS`, `DEPLOYER_PRIVATE_KEY`, `STARKNET_RPC_URL` etc.
-3. Run deploy: `npm run deploy`
+```bash
+# Install dependencies
+pnpm install
 
-The script will:
-1. Declare all contract classes.
-2. Deploy ADUSD, ADNGN, AdamPool, and AdamSwap.
-3. Automatically configure roles (granting AdamSwap mint/burn permissions).
-4. Save deployment details to `scripts/deployment.json`.
+# Check your environment configuration
+./scripts/check-env.sh
+
+# Deploy to testnet with automatic role setup
+./scripts/deploy.sh --usdc $USDC_ADDRESS --owner $DEPLOYER_ADDRESS --setup-roles
+```
+
+### Documentation
+
+- **[Quick Start Guide](./DEPLOY_QUICK_START.md)** - Deploy in 5 minutes
+- **[Full Deployment Guide](./DEPLOYMENT.md)** - Comprehensive documentation
+- **[Role Setup Script](./scripts/setup-roles.sh)** - Configure permissions separately
+
+### What the Script Does
+
+1. Builds all contracts with `scarb build`
+2. Declares all contract classes to Starknet
+3. Deploys ADUSD, ADNGN, AdamPool, and AdamSwap
+4. Optionally configures roles (with `--setup-roles` flag):
+   - Grants MINTER_ROLE to AdamSwap on both tokens
+   - Grants BURNER_ROLE to AdamSwap on both tokens
+   - Sets swap contract address in pool
+5. Saves deployment summary to `deployment_logs/deployment_summary_<network>.json`
+
+### Deployment Options
+
+```bash
+# Basic deployment
+./scripts/deploy.sh --usdc 0x... --owner 0x...
+
+# With custom fee (0.5%)
+./scripts/deploy.sh --usdc 0x... --owner 0x... --fee 50
+
+# Deploy to mainnet
+./scripts/deploy.sh --usdc 0x... --owner 0x... --network mainnet
+
+# Using npm/pnpm
+pnpm deploy -- --usdc 0x... --owner 0x...
+```
