@@ -1,3 +1,10 @@
+pub const RATE_SETTER_ROLE: felt252 = selector!("RATE_SETTER_ROLE");
+pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
+pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
+/// 1e18 — fixed-point precision for rates
+pub const RATE_PRECISION: u256 = 1_000_000_000_000_000_000_u256;
+pub const MAX_FEE_BPS: u16 = 1000; // 10%
+
 /// AdamSwap — core exchange contract (upgradeable).
 #[starknet::contract]
 pub mod AdamSwap {
