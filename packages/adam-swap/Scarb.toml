@@ -19,3 +19,7 @@ sierra = true
 name = "adam_swap"
 sierra = true
 casm = true
+build-external-contracts = ["adam_token::adam_token::AdamToken", "adam_pool::adam_pool::AdamPool"]
+
+[tool.snforge]
+build-external-contracts = ["adam_token::adam_token::AdamToken", "adam_pool::adam_pool::AdamPool"]
