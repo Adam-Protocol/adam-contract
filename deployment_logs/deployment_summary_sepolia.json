@@ -1,0 +1,16 @@
+{
+  "network": "sepolia",
+  "timestamp": "2026-03-04T09:41:22Z",
+  "contracts": {
+    "adusd": "0x025a17a3eb413707e65a725f78d796506114aaaa1a5855f6bb4a4e94a02b4abf",
+    "adngn": "0x00cbd26c24bc30faef27cfb428e8c813a88b80f6590e45f5b318ae9cc608fea6",
+    "pool": "0x04cfa9660c0acca29ffc3a3a41777c38f5c7ba56c84b1c76eccf185e4494259d",
+    "swap": "0x028cdc030654f1e6604257b0d93599e8d2dae1f161dbe0a3fb0eb90da660bd1c",
+    "usdc": "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7"
+  },
+  "classHashes": {
+    "adamToken": "0x057a2d9808836e35975301de3318ec275a49c7bd1274589fc2d73450fdae30b9",
+    "adamPool": "0x02f8de695fd88a8c4d4f80004f5e5d4ca8e6b67cd570d38ec2d0c5b2ad401b80",
+    "adamSwap": "0x019a3e1e0b34acbf00113fdd23cbfc4d85035bf9822c509679be6fad72063f02"
+  }
+}
