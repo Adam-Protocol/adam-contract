@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 pub const MINTER_ROLE: felt252 = selector!("MINTER_ROLE");
 pub const BURNER_ROLE: felt252 = selector!("BURNER_ROLE");
 pub const PAUSER_ROLE: felt252 = selector!("PAUSER_ROLE");
