@@ -1,78 +1,226 @@
-use adam_token::adam_token::{AdamToken, MINTER_ROLE};
+use adam_token::adam_token::{BURNER_ROLE, MINTER_ROLE, PAUSER_ROLE};
 use adam_token::interfaces::{IAdamTokenDispatcher, IAdamTokenDispatcherTrait};
+use openzeppelin::access::accesscontrol::interface::{
+    IAccessControlDispatcher, IAccessControlDispatcherTrait,
+};
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
     stop_cheat_caller_address,
 };
 use starknet::ContractAddress;
 
-fn OWNER() -> ContractAddress {
+fn owner() -> ContractAddress {
     starknet::contract_address_const::<'OWNER'>()
 }
 
-fn deploy_token() -> (ContractAddress, IAdamTokenDispatcher) {
-    let contract_class = declare("AdamToken")
-        .expect('Failed to declare AdamToken')
-        .contract_class();
-    let mut constructor_calldata = array![];
-    let name: ByteArray = "Adam US Dollar";
-    let symbol: ByteArray = "ADUSD";
-    name.serialize(ref constructor_calldata);
-    symbol.serialize(ref constructor_calldata);
-    OWNER().serialize(ref constructor_calldata);
-    let (contract_address, _) = contract_class.deploy(@constructor_calldata).unwrap();
-    (contract_address, IAdamTokenDispatcher { contract_address })
-}
-
-#[test]
-fn test_metadata() {
-    let (_, dispatcher) = deploy_token();
-    assert(dispatcher.name() == "Adam US Dollar", 'wrong name');
-    assert(dispatcher.symbol() == "ADUSD", 'wrong symbol');
-    assert(dispatcher.decimals() == 18, 'wrong decimals');
-}
-
-#[test]
-fn test_mint_admin() {
-    let (address, dispatcher) = deploy_token();
-
-    start_cheat_caller_address(address, OWNER());
-    dispatcher.mint(ALICE(), 1000);
-    stop_cheat_caller_address(address);
-
-    assert(dispatcher.balance_of(ALICE()) == 1000, 'mint failed');
-}
-
-#[test]
-#[should_panic(expected: ('Caller is missing role',))]
-fn test_unauthorized_mint() {
-    let (_address, dispatcher) = deploy_token();
-    dispatcher.mint(ALICE(), 1000);
-}
-
-#[test]
-fn test_transfer() {
-    let (address, dispatcher) = deploy_token();
-
-    start_cheat_caller_address(address, OWNER());
-    dispatcher.mint(OWNER(), 1000);
-    dispatcher.transfer(ALICE(), 400);
-    stop_cheat_caller_address(address);
-
-    assert(dispatcher.balance_of(OWNER()) == 600, 'wrong owner balance');
-    assert(dispatcher.balance_of(ALICE()) == 400, 'wrong alice balance');
-}
-
-#[test]
-fn test_pause_unpause() {
-    let (address, dispatcher) = deploy_token();
-
-    start_cheat_caller_address(address, OWNER());
-    dispatcher.pause();
-    // We expect transfer to fail when paused
-// Note: OpenZeppelin Pausable usually reverts with 'Pausable: paused'
-}
-
-fn ALICE() -> ContractAddress {
+fn alice() -> ContractAddress {
     starknet::contract_address_const::<'ALICE'>()
+}
+
+fn bob() -> ContractAddress {
+    starknet::contract_address_const::<'BOB'>()
+}
+
+fn zero_address() -> ContractAddress {
+    starknet::contract_address_const::<0>()
+}
+
+fn deploy_adam_token(
+    name: ByteArray, symbol: ByteArray, owner: ContractAddress,
+) -> ContractAddress {
+    let token_class = declare("AdamToken").expect('Failed to declare AdamToken').contract_class();
+    let mut calldata = array![];
+    name.serialize(ref calldata);
+    symbol.serialize(ref calldata);
+    owner.serialize(ref calldata);
+    let (contract_address, _) = token_class.deploy(@calldata).unwrap();
+    contract_address
+}
+
+#[test]
+fn test_constructor() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    assert(token.name() == "Adam USD", 'wrong name');
+    assert(token.symbol() == "ADUSD", 'wrong symbol');
+    assert(token.decimals() == 18, 'wrong decimals');
+    assert(token.total_supply() == 0, 'wrong supply');
+}
+
+#[test]
+fn test_mint_success() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.balance_of(alice()) == 1000, 'wrong balance');
+    assert(token.total_supply() == 1000, 'wrong supply');
+}
+
+#[test]
+#[should_panic(expected: ('adam: zero amount',))]
+fn test_mint_zero_amount() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 0);
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+#[should_panic(expected: ('adam: zero address',))]
+fn test_mint_zero_address() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(zero_address(), 1000);
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+#[should_panic]
+fn test_mint_unauthorized() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, alice());
+    token.mint(alice(), 1000);
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+fn test_burn_success() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+    let access_control = IAccessControlDispatcher { contract_address: token_addr };
+
+    // Mint tokens first
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    access_control.grant_role(BURNER_ROLE, owner());
+    token.burn(alice(), 500);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.balance_of(alice()) == 500, 'wrong balance');
+    assert(token.total_supply() == 500, 'wrong supply');
+}
+
+#[test]
+#[should_panic(expected: ('adam: zero amount',))]
+fn test_burn_zero_amount() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+    let access_control = IAccessControlDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    access_control.grant_role(BURNER_ROLE, owner());
+    token.burn(alice(), 0);
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+#[should_panic]
+fn test_burn_unauthorized() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    stop_cheat_caller_address(token_addr);
+
+    start_cheat_caller_address(token_addr, alice());
+    token.burn(alice(), 500);
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+fn test_transfer_success() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    stop_cheat_caller_address(token_addr);
+
+    start_cheat_caller_address(token_addr, alice());
+    token.transfer(bob(), 300);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.balance_of(alice()) == 700, 'wrong alice balance');
+    assert(token.balance_of(bob()) == 300, 'wrong bob balance');
+}
+
+#[test]
+fn test_approve_and_transfer_from() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    token.mint(alice(), 1000);
+    stop_cheat_caller_address(token_addr);
+
+    start_cheat_caller_address(token_addr, alice());
+    token.approve(bob(), 500);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.allowance(alice(), bob()) == 500, 'wrong allowance');
+
+    start_cheat_caller_address(token_addr, bob());
+    token.transfer_from(alice(), bob(), 300);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.balance_of(alice()) == 700, 'wrong alice balance');
+    assert(token.balance_of(bob()) == 300, 'wrong bob balance');
+    assert(token.allowance(alice(), bob()) == 200, 'wrong allowance after');
+}
+
+#[test]
+#[should_panic]
+fn test_pause_unauthorized() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, alice());
+    token.pause();
+    stop_cheat_caller_address(token_addr);
+}
+
+#[test]
+fn test_grant_minter_role() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let token = IAdamTokenDispatcher { contract_address: token_addr };
+    let access_control = IAccessControlDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    access_control.grant_role(MINTER_ROLE, alice());
+    stop_cheat_caller_address(token_addr);
+
+    assert(access_control.has_role(MINTER_ROLE, alice()), 'role not granted');
+
+    // Alice can now mint
+    start_cheat_caller_address(token_addr, alice());
+    token.mint(bob(), 500);
+    stop_cheat_caller_address(token_addr);
+
+    assert(token.balance_of(bob()) == 500, 'mint failed');
+}
+
+#[test]
+fn test_revoke_minter_role() {
+    let token_addr = deploy_adam_token("Adam USD", "ADUSD", owner());
+    let access_control = IAccessControlDispatcher { contract_address: token_addr };
+
+    start_cheat_caller_address(token_addr, owner());
+    access_control.grant_role(MINTER_ROLE, alice());
+    access_control.revoke_role(MINTER_ROLE, alice());
+    stop_cheat_caller_address(token_addr);
+
+    assert(!access_control.has_role(MINTER_ROLE, alice()), 'role not revoked');
 }
