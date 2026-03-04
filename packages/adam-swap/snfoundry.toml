@@ -1,0 +1,8 @@
+[sncast.default]
+
+[snforge.default]
+# Build external contracts for testing
+build-external-contracts = [
+    "../adam-token::AdamToken",
+    "../adam-pool::AdamPool"
+]
