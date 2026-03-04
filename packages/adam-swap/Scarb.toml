@@ -18,3 +18,4 @@ sierra = true
 [[target.starknet-contract]]
 name = "adam_swap"
 sierra = true
+casm = true

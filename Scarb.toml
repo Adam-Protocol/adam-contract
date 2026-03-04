@@ -15,3 +15,6 @@ adam_swap = { path = "packages/adam-swap" }
 
 [tool.scarb]
 allow-prebuilt-plugins = ["snforge_std"]
+
+[tool.sncast.sepolia]
+url = "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/5QQMV6kqa3iDaH_EbNhTw"

@@ -16,3 +16,4 @@ sierra = true
 [[target.starknet-contract]]
 name = "adam_pool"
 sierra = true
+casm = true

@@ -16,3 +16,4 @@ sierra = true
 [[target.starknet-contract]]
 name = "adam_token"
 sierra = true
+casm = true
