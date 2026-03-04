@@ -12,7 +12,7 @@ Successfully deployed Adam Protocol contracts to Starknet Sepolia testnet on **M
 | ADNGN Token | `0x00cbd26c24bc30faef27cfb428e8c813a88b80f6590e45f5b318ae9cc608fea6` | [View on Starkscan](https://sepolia.starkscan.co/contract/0x00cbd26c24bc30faef27cfb428e8c813a88b80f6590e45f5b318ae9cc608fea6) |
 | Adam Pool | `0x04cfa9660c0acca29ffc3a3a41777c38f5c7ba56c84b1c76eccf185e4494259d` | [View on Starkscan](https://sepolia.starkscan.co/contract/0x04cfa9660c0acca29ffc3a3a41777c38f5c7ba56c84b1c76eccf185e4494259d) |
 | Adam Swap | `0x028cdc030654f1e6604257b0d93599e8d2dae1f161dbe0a3fb0eb90da660bd1c` | [View on Starkscan](https://sepolia.starkscan.co/contract/0x028cdc030654f1e6604257b0d93599e8d2dae1f161dbe0a3fb0eb90da660bd1c) |
-| USDC (Reference) | `0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7` | [View on Starkscan](https://sepolia.starkscan.co/contract/0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7) |
+| USDC (Reference) | `0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080` | [View on Starkscan](https://sepolia.starkscan.co/contract/0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080) |
 
 ### Class Hashes
 
@@ -54,7 +54,7 @@ STARKNET_NETWORK=sepolia
 STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/<your_api_key>
 
 # Contract Addresses
-USDC_ADDRESS=0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+USDC_ADDRESS=0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080
 
 # Deployment Configuration
 DEFAULT_FEE_BPS=30
