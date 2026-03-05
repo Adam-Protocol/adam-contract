@@ -1,11 +1,11 @@
 {
   "network": "sepolia",
-  "timestamp": "2026-03-04T09:41:22Z",
+  "timestamp": "2026-03-05T10:03:09Z",
   "contracts": {
-    "adusd": "0x025a17a3eb413707e65a725f78d796506114aaaa1a5855f6bb4a4e94a02b4abf",
-    "adngn": "0x00cbd26c24bc30faef27cfb428e8c813a88b80f6590e45f5b318ae9cc608fea6",
-    "pool": "0x04cfa9660c0acca29ffc3a3a41777c38f5c7ba56c84b1c76eccf185e4494259d",
-    "swap": "0x028cdc030654f1e6604257b0d93599e8d2dae1f161dbe0a3fb0eb90da660bd1c",
+    "adusd": "0x067d4437b253839c88b7a3cf6a530e767acfbc6a40ccfa52a02c3e1604779a2d",
+    "adngn": "0x0794495de4eabf33a7799884134f9010624293b7fb84a2586dd8e2638e1e3267",
+    "pool": "0x035f22fae1295dfdb02b863d0c03e8395a8e92fdca9b38bbfec5b73fad4b61bd",
+    "swap": "0x07984588fbc7ba62d1ac9758841b9884aac028ae2960289ed63bb0dd7b5718c8",
     "usdc": "0x053b40a647cedfca6ca84f542a0fe36736031905a9639a7f19a3c1e66bfd5080"
   },
   "classHashes": {

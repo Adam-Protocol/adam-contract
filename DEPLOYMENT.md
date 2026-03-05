@@ -26,8 +26,8 @@ Successfully deployed Adam Protocol contracts to Starknet Sepolia testnet on **M
 
 - **Network**: Starknet Sepolia Testnet
 - **RPC URL**: `https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/5QQMV6kqa3iDaH_EbNhTw`
-- **Owner/Admin**: `0x0456e6d7184cd79e3f5cc63397a5540e8aeef7fd2f136136dfd40caf122cba88`
-- **Treasury**: `0x0456e6d7184cd79e3f5cc63397a5540e8aeef7fd2f136136dfd40caf122cba88`
+- **Owner/Admin**: `0x4c73687f23639fdfd8d7d71ea7fccd62866351b0eff5efea14148c7b6ee5b27`
+- **Treasury**: `0x4c73687f23639fdfd8d7d71ea7fccd62866351b0eff5efea14148c7b6ee5b27`
 - **Fee (BPS)**: 30 (0.3%)
 
 ## How to Deploy
