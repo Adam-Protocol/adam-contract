@@ -250,6 +250,15 @@ pub mod AdamSwap {
             self.fee_bps.write(fee_bps);
         }
 
+        /// Sets the USDC address.
+        /// Requires DEFAULT_ADMIN_ROLE.
+        #[external(v0)]
+        fn set_usdc_address(ref self: ContractState, usdc_address: ContractAddress) {
+            self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
+            assert(!usdc_address.is_zero(), Errors::ZERO_ADDRESS);
+            self.usdc_address.write(usdc_address);
+        }
+
         /// Pauses the swap contract.
         /// Requires PAUSER_ROLE.
         #[external(v0)]
