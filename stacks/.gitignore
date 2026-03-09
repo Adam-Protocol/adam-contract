@@ -1,0 +1,32 @@
+# Clarinet
+.cache/
+deployments/*.yaml
+deployments/*.json
+!deployments/.gitkeep
+
+# Settings with sensitive data
+settings/Testnet.toml
+settings/Mainnet.toml
+
+# Keep example settings
+!settings/*.example.toml
+
+# Logs
+*.log
+deployment_logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (if using any JS tooling)
+node_modules/
+package-lock.json
+yarn.lock

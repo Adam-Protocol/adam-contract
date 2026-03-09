@@ -1,0 +1,36 @@
+[project]
+name = "adam-protocol-stacks"
+description = "Privacy-first stablecoin system on Stacks"
+authors = ["Adam Protocol Team"]
+telemetry = false
+cache_dir = "./.cache"
+requirements = []
+
+[contracts.adam-token-adusd]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-token-adngn]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-pool]
+path = "contracts/adam-pool.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-swap]
+path = "contracts/adam-swap.clar"
+clarity_version = 2
+epoch = 2.5
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
