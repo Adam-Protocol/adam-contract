@@ -172,6 +172,8 @@ pub mod AdamSwap {
             amount: u256,
             nullifier: felt252,
             commitment: felt252,
+            proof: Span<felt252>,
+            new_commitments: Span<felt252>,
         ) {
             self.pausable.assert_not_paused();
             let caller = get_caller_address();
@@ -183,7 +185,7 @@ pub mod AdamSwap {
             assert(!pool.is_nullifier_spent(nullifier), Errors::NULLIFIER_SPENT);
 
             IAdamTokenDispatcher { contract_address: token_in }.burn(caller, amount);
-            pool.spend_nullifier(nullifier);
+            pool.spend_nullifier(nullifier, proof, new_commitments);
 
             self.emit(SellExecuted { nullifier, token_in, timestamp: get_block_timestamp() });
         }
@@ -195,6 +197,8 @@ pub mod AdamSwap {
             amount_in: u256,
             token_out: ContractAddress,
             min_amount_out: u256,
+            nullifier: felt252,
+            proof: Span<felt252>,
             commitment: felt252,
         ) {
             self.pausable.assert_not_paused();
@@ -207,11 +211,13 @@ pub mod AdamSwap {
             let amount_out = self._apply_rate_and_fee(token_in, token_out, amount_in);
             assert(amount_out >= min_amount_out, Errors::SLIPPAGE_EXCEEDED);
 
+            let pool = IAdamPoolDispatcher { contract_address: self.pool_address.read() };
+            
+            // In a private swap, we spend an existing note (nullifier) and create a new one (commitment)
+            pool.spend_nullifier(nullifier, proof, array![commitment].span());
+
             IAdamTokenDispatcher { contract_address: token_in }.burn(caller, amount_in);
             IAdamTokenDispatcher { contract_address: token_out }.mint(caller, amount_out);
-
-            IAdamPoolDispatcher { contract_address: self.pool_address.read() }
-                .register_commitment(commitment, token_out);
 
             self
                 .emit(
