@@ -1,0 +1,18 @@
+[network]
+name = "mainnet"
+node_rpc_address = "https://api.hiro.so"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+# SECURITY: Use encrypted mnemonic for mainnet!
+# 1. Run: clarinet deployments encrypt
+# 2. Enter your mnemonic and password
+# 3. Copy the encrypted output below
+
+# For testing only (NEVER use on mainnet):
+# mnemonic = "your twenty four word mnemonic phrase here"
+
+# Production (recommended):
+encrypted_mnemonic = "paste encrypted mnemonic output here from clarinet deployments encrypt"
+
+# When deploying, you'll be prompted for the password to decrypt

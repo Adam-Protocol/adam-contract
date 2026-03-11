@@ -50,6 +50,9 @@ pub mod AdamSwap {
         // Adam Protocol stablecoin addresses
         adusd_address: ContractAddress,
         adngn_address: ContractAddress,
+        adkes_address: ContractAddress,
+        adghs_address: ContractAddress,
+        adzar_address: ContractAddress,
         // Repository for commitments and nullifiers
         pool_address: ContractAddress,
         // Address where protocol fees are sent
@@ -143,10 +146,7 @@ pub mod AdamSwap {
             let caller = get_caller_address();
             assert(amount_in > 0, Errors::ZERO_AMOUNT);
             assert(token_in == self.usdc_address.read(), Errors::INVALID_TOKEN);
-            assert(
-                token_out == self.adusd_address.read() || token_out == self.adngn_address.read(),
-                Errors::INVALID_TOKEN,
-            );
+            assert(self._is_valid_adam_token(token_out), Errors::INVALID_TOKEN);
 
             // Transfer USDC to treasury
             IERC20Dispatcher { contract_address: token_in }
@@ -176,10 +176,7 @@ pub mod AdamSwap {
             self.pausable.assert_not_paused();
             let caller = get_caller_address();
             assert(amount > 0, Errors::ZERO_AMOUNT);
-            assert(
-                token_in == self.adusd_address.read() || token_in == self.adngn_address.read(),
-                Errors::INVALID_TOKEN,
-            );
+            assert(self._is_valid_adam_token(token_in), Errors::INVALID_TOKEN);
 
             let pool = IAdamPoolDispatcher { contract_address: self.pool_address.read() };
             assert(pool.is_commitment_registered(commitment), Errors::COMMITMENT_NOT_FOUND);
@@ -204,12 +201,8 @@ pub mod AdamSwap {
             let caller = get_caller_address();
             assert(amount_in > 0, Errors::ZERO_AMOUNT);
             assert(token_in != token_out, Errors::INVALID_TOKEN);
-            assert(
-                (token_in == self.adusd_address.read() && token_out == self.adngn_address.read())
-                    || (token_in == self.adngn_address.read()
-                        && token_out == self.adusd_address.read()),
-                Errors::INVALID_TOKEN,
-            );
+            assert(self._is_valid_adam_token(token_in), Errors::INVALID_TOKEN);
+            assert(self._is_valid_adam_token(token_out), Errors::INVALID_TOKEN);
 
             let amount_out = self._apply_rate_and_fee(token_in, token_out, amount_in);
             assert(amount_out >= min_amount_out, Errors::SLIPPAGE_EXCEEDED);
@@ -305,6 +298,42 @@ pub mod AdamSwap {
         fn get_pool_address(self: @ContractState) -> ContractAddress {
             self.pool_address.read()
         }
+
+        #[external(v0)]
+        fn get_adkes_address(self: @ContractState) -> ContractAddress {
+            self.adkes_address.read()
+        }
+
+        #[external(v0)]
+        fn get_adghs_address(self: @ContractState) -> ContractAddress {
+            self.adghs_address.read()
+        }
+
+        #[external(v0)]
+        fn get_adzar_address(self: @ContractState) -> ContractAddress {
+            self.adzar_address.read()
+        }
+
+        #[external(v0)]
+        fn set_adkes_address(ref self: ContractState, adkes_address: ContractAddress) {
+            self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
+            assert(!adkes_address.is_zero(), Errors::ZERO_ADDRESS);
+            self.adkes_address.write(adkes_address);
+        }
+
+        #[external(v0)]
+        fn set_adghs_address(ref self: ContractState, adghs_address: ContractAddress) {
+            self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
+            assert(!adghs_address.is_zero(), Errors::ZERO_ADDRESS);
+            self.adghs_address.write(adghs_address);
+        }
+
+        #[external(v0)]
+        fn set_adzar_address(ref self: ContractState, adzar_address: ContractAddress) {
+            self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
+            assert(!adzar_address.is_zero(), Errors::ZERO_ADDRESS);
+            self.adzar_address.write(adzar_address);
+        }
     }
 
     #[abi(embed_v0)]
@@ -328,6 +357,14 @@ pub mod AdamSwap {
             let gross_out = (amount_in * rate) / RATE_PRECISION;
             let fee_bps: u256 = self.fee_bps.read().into();
             gross_out - (gross_out * fee_bps) / 10000_u256
+        }
+
+        fn _is_valid_adam_token(self: @ContractState, token: ContractAddress) -> bool {
+            token == self.adusd_address.read()
+                || token == self.adngn_address.read()
+                || token == self.adkes_address.read()
+                || token == self.adghs_address.read()
+                || token == self.adzar_address.read()
         }
     }
 }

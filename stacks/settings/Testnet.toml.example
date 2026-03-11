@@ -1,0 +1,11 @@
+[network]
+name = "testnet"
+node_rpc_address = "https://api.testnet.hiro.so"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "your twenty four word mnemonic phrase here replace with actual mnemonic from wallet"
+# Get testnet STX from: https://explorer.hiro.so/sandbox/faucet?chain=testnet
+
+# Alternative testnet endpoints:
+# node_rpc_address = "https://stacks-node-api.testnet.stacks.co"
