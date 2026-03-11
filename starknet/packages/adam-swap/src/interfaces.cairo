@@ -12,7 +12,9 @@ pub trait IAdamToken<TState> {
 #[starknet::interface]
 pub trait IAdamPool<TState> {
     fn register_commitment(ref self: TState, commitment: felt252, token: ContractAddress);
-    fn spend_nullifier(ref self: TState, nullifier: felt252);
+    fn spend_nullifier(
+        ref self: TState, nullifier: felt252, proof: Span<felt252>, new_commitments: Span<felt252>
+    );
     fn is_commitment_registered(self: @TState, commitment: felt252) -> bool;
     fn is_nullifier_spent(self: @TState, nullifier: felt252) -> bool;
     fn set_swap_contract(ref self: TState, swap_contract: ContractAddress);
@@ -34,6 +36,8 @@ pub trait IAdamSwap<TState> {
         amount: u256,
         nullifier: felt252,
         commitment: felt252,
+        proof: Span<felt252>,
+        new_commitments: Span<felt252>,
     );
     fn swap(
         ref self: TState,
@@ -41,6 +45,8 @@ pub trait IAdamSwap<TState> {
         amount_in: u256,
         token_out: ContractAddress,
         min_amount_out: u256,
+        nullifier: felt252,
+        proof: Span<felt252>,
         commitment: felt252,
     );
     fn set_rate(

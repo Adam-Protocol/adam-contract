@@ -33,7 +33,7 @@ fn test_nullifier_lifecycle() {
     assert(!dispatcher.is_nullifier_spent(nullifier), 'should not be spent yet');
 
     start_cheat_caller_address(address, SWAP());
-    dispatcher.spend_nullifier(nullifier);
+    dispatcher.spend_nullifier(nullifier, array![].span(), array![].span());
     stop_cheat_caller_address(address);
 
     assert(dispatcher.is_nullifier_spent(nullifier), 'should be spent');
@@ -51,8 +51,8 @@ fn test_cannot_spend_twice() {
     let nullifier: felt252 = 0x456.into();
 
     start_cheat_caller_address(address, SWAP());
-    dispatcher.spend_nullifier(nullifier);
-    dispatcher.spend_nullifier(nullifier);
+    dispatcher.spend_nullifier(nullifier, array![].span(), array![].span());
+    dispatcher.spend_nullifier(nullifier, array![].span(), array![].span());
 }
 
 #[test]
@@ -60,5 +60,5 @@ fn test_cannot_spend_twice() {
 fn test_spend_unauthorized() {
     let (address, dispatcher) = deploy_pool();
     let nullifier: felt252 = 0x456.into();
-    dispatcher.spend_nullifier(nullifier);
+    dispatcher.spend_nullifier(nullifier, array![].span(), array![].span());
 }

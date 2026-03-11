@@ -1,4 +1,3 @@
-use starknet::ContractAddress;
 
 pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 
@@ -17,6 +16,7 @@ pub mod AdamPool {
     use starknet::{ClassHash, ContractAddress, get_block_timestamp, get_caller_address};
     use crate::errors::Errors;
     use crate::events::{CommitmentRegistered, NullifierSpent};
+    use crate::interfaces::IGaragaVerifierDispatcherTrait;
     use super::UPGRADER_ROLE;
 
     // Components used for access control, discovery, and upgrades
@@ -40,6 +40,8 @@ pub mod AdamPool {
         nullifiers: Map<felt252, bool>,
         // The authorized AdamSwap contract address
         swap_contract: ContractAddress,
+        // The Garaga Verifier contract address
+        verifier_contract: ContractAddress,
         #[substorage(v0)]
         accesscontrol: AccessControlComponent::Storage,
         #[substorage(v0)]
@@ -85,12 +87,47 @@ pub mod AdamPool {
         }
 
         /// Marks a nullifier as spent to prevent double-spending.
+        /// Verifies a ZK proof via the Garaga verifier and registers new commitments.
         /// Only callable by the authorized swap contract.
         #[external(v0)]
-        fn spend_nullifier(ref self: ContractState, nullifier: felt252) {
+        fn spend_nullifier(
+            ref self: ContractState,
+            nullifier: felt252,
+            proof: Span<felt252>,
+            new_commitments: Span<felt252>
+        ) {
             self._assert_only_swap();
             assert(!self.nullifiers.read(nullifier), Errors::NULLIFIER_SPENT);
+
+            // Verify the Garaga ZK proof
+            let verifier_address = self.verifier_contract.read();
+            if !verifier_address.is_zero() {
+                let verifier = crate::interfaces::IGaragaVerifierDispatcher { contract_address: verifier_address };
+                
+                // Construct public inputs: [nullifier, commitment1, commitment2, ...]
+                let mut public_inputs = array![nullifier];
+                let mut i: u32 = 0;
+                while i < new_commitments.len() {
+                    public_inputs.append(*new_commitments.at(i));
+                    i += 1;
+                };
+
+                let is_valid = verifier.verify_ultra_honk_proof(proof, public_inputs.span());
+                assert(is_valid, Errors::UNAUTHORIZED);
+            }
+
+            // Mark nullifier as spent
             self.nullifiers.write(nullifier, true);
+
+            // Register new commitments (atomic split/change)
+            let mut i: u32 = 0;
+            while i < new_commitments.len() {
+                let commitment = *new_commitments.at(i);
+                assert(!self.commitments.read(commitment), Errors::COMMITMENT_EXISTS);
+                self.commitments.write(commitment, true);
+                i += 1;
+            };
+
             self.emit(NullifierSpent { nullifier, timestamp: get_block_timestamp() });
         }
 
@@ -99,6 +136,12 @@ pub mod AdamPool {
             self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
             assert(!swap_contract.is_zero(), Errors::ZERO_ADDRESS);
             self.swap_contract.write(swap_contract);
+        }
+
+        #[external(v0)]
+        fn set_verifier_contract(ref self: ContractState, verifier_contract: ContractAddress) {
+            self.accesscontrol.assert_only_role(DEFAULT_ADMIN_ROLE);
+            self.verifier_contract.write(verifier_contract);
         }
 
         #[external(v0)]
