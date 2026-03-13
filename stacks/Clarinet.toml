@@ -16,15 +16,11 @@ path = "contracts/adam-token.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-pool]
-path = "contracts/adam-pool.clar"
-clarity_version = 2
-epoch = 2.5
-
 [contracts.adam-swap]
 path = "contracts/adam-swap.clar"
 clarity_version = 2
 epoch = 2.5
+depends_on = ["adam-token-adusd", "adam-token-adngn"]
 
 [repl.analysis]
 passes = ["check_checker"]
