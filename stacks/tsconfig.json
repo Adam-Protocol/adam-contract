@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["vitest/globals", "@stacks/clarinet-sdk/vitest"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true
+  },
+  "include": ["tests/**/*.ts", "vitest.config.ts", "node_modules/@stacks/clarinet-sdk/vitest-helpers/src/*.d.ts"]
+}

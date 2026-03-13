@@ -1,0 +1,22 @@
+{
+  "name": "stacks",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.10.0",
+  "devDependencies": {
+    "@stacks/clarinet-sdk": "^3.15.0",
+    "@stacks/transactions": "^7.3.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0",
+    "vitest-environment-clarinet": "^3.0.2"
+  }
+}
