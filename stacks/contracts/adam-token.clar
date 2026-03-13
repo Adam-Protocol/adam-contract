@@ -7,15 +7,18 @@
 (define-constant ERR-NOT-BURNER (err u102))
 (define-constant ERR-ZERO-AMOUNT (err u103))
 (define-constant ERR-ZERO-ADDRESS (err u104))
+(define-constant ERR-PAUSED (err u105))
 
 ;; Token configuration (set during deployment)
 (define-data-var token-name (string-ascii 32) "Adam Token")
 (define-data-var token-symbol (string-ascii 32) "ADAM")
 (define-data-var token-decimals uint u6)
-(define-data-var token-uri (optional (string-utf8 256)) none)
+(define-constant token-uri none)
 
-;; Contract owner
 (define-data-var contract-owner principal tx-sender)
+
+;; Global pause state
+(define-data-var paused bool false)
 
 ;; Role mappings
 (define-map minters
@@ -59,6 +62,7 @@
     (memo (optional (buff 34)))
   )
   (begin
+    (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (is-eq tx-sender sender) ERR-UNAUTHORIZED)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
     (try! (ft-transfer? adam-token amount sender recipient))
@@ -91,7 +95,7 @@
 )
 
 (define-read-only (get-token-uri)
-  (ok (var-get token-uri))
+  (ok token-uri)
 )
 
 ;; Custom Functions
@@ -102,6 +106,7 @@
     (recipient principal)
   )
   (begin
+    (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (is-minter tx-sender) ERR-NOT-MINTER)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
     (asserts! (not (is-eq recipient 'SP000000000000000000002Q6VF78))
@@ -117,6 +122,7 @@
     (owner principal)
   )
   (begin
+    (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (is-burner tx-sender) ERR-NOT-BURNER)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
     (ft-burn? adam-token amount owner)
@@ -150,6 +156,26 @@
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
     (ok (var-set contract-owner new-owner))
   )
+)
+
+;; Pause management
+
+(define-public (pause)
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (ok (var-set paused true))
+  )
+)
+
+(define-public (unpause)
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (ok (var-set paused false))
+  )
+)
+
+(define-read-only (is-paused)
+  (ok (var-get paused))
 )
 
 ;; Read-only role checks
