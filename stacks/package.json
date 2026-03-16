@@ -5,7 +5,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest",
+    "deploy:usdcx": "tsx scripts/deploy-usdcx.ts",
+    "mint:usdcx": "tsx scripts/mint-usdcx.ts",
+    "check:usdcx": "tsx scripts/check-usdcx-balance.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +19,7 @@
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.3.1",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0",
     "vitest-environment-clarinet": "^3.0.2"
@@ -23,6 +27,7 @@
   "dependencies": {
     "@stacks/common": "^7.3.1",
     "@stacks/wallet-sdk": "^7.2.0",
-    "dotenv": "^17.3.1"
+    "dotenv": "^17.3.1",
+    "node-fetch": "^2.7.0"
   }
 }
