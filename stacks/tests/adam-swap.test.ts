@@ -29,6 +29,7 @@ describe('Adam Swap', () => {
       'initialize',
       [
         Cl.principal(deployer),
+        Cl.principal(treasury),
         Cl.principal(usdcMock),
         Cl.principal(adusdMock),
         Cl.principal(adngnMock),
@@ -111,6 +112,7 @@ describe('Adam Swap', () => {
     simnet.callPublicFn('adam-swap', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
     simnet.callPublicFn('adam-swap', 'set-rate', [Cl.principal(adusdMock), Cl.principal(getAdngnMock()), Cl.uint(150000n)], deployer);
     
+    simnet.callPublicFn('adam-swap', 'set-pauser', [Cl.principal(deployer), Cl.bool(true)], deployer);
     simnet.callPublicFn('adam-swap', 'pause', [], deployer);
     expect(simnet.callReadOnlyFn('adam-swap', 'is-paused', [], deployer).result).toBeOk(Cl.bool(true));
 

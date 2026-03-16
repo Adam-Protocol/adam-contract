@@ -23,11 +23,24 @@
 ;; Contract owner
 (define-data-var contract-owner principal tx-sender)
 
+;; Treasury address for fee collection
+(define-data-var treasury-address principal tx-sender)
+
 ;; Global pause state
 (define-data-var paused bool false)
 
 ;; Role mappings
 (define-map rate-setters
+  principal
+  bool
+)
+
+(define-map pausers
+  principal
+  bool
+)
+
+(define-map admins
   principal
   bool
 )
@@ -55,6 +68,7 @@
 ;; Initialize contract
 (define-public (initialize
     (owner principal)
+    (treasury principal)
     (usdc principal)
     (adusd principal)
     (adngn principal)
@@ -71,6 +85,7 @@
     (asserts!
       (and
         (not (is-eq owner ZERO-ADDRESS))
+        (not (is-eq treasury ZERO-ADDRESS))
         (not (is-eq usdc ZERO-ADDRESS))
         (not (is-eq adusd ZERO-ADDRESS))
         (not (is-eq adngn ZERO-ADDRESS))
@@ -82,6 +97,7 @@
     )
 
     (var-set contract-owner owner)
+    (var-set treasury-address treasury)
     (var-set usdc-address (some usdc))
     (var-set adusd-address (some adusd))
     (var-set adngn-address (some adngn))
@@ -90,8 +106,10 @@
     (var-set adzar-address (some adzar))
     (var-set fee-bps initial-fee-bps)
 
-    ;; Grant rate-setter role to owner
+    ;; Grant all roles to owner
+    (map-set admins owner true)
     (map-set rate-setters owner true)
+    (map-set pausers owner true)
 
     ;; Set initial USDC <-> ADUSD rate (1:1)
     (map-set rates {
@@ -124,8 +142,8 @@
     (asserts! (is-valid-adam-token token-out) ERR-INVALID-TOKEN)
 
     (let ((amount-out (try! (apply-rate-and-fee token-in token-out amount-in))))
-      ;; Transfer USDC from caller to contract
-      (try! (contract-call? .usdcx transfer amount-in caller (as-contract tx-sender)
+      ;; Transfer USDC from caller to treasury
+      (try! (contract-call? .usdcx transfer amount-in caller (var-get treasury-address)
         none
       ))
 
@@ -133,13 +151,13 @@
       (try! (mint-adam-token token-out amount-out caller))
 
       (print {
-        event: "buy",
+        event: "BuyExecuted",
         caller: caller,
         token-in: token-in,
         amount-in: amount-in,
         token-out: token-out,
         amount-out: amount-out,
-        block-height: block-height,
+        timestamp: block-height,
       })
 
       (ok amount-out)
@@ -161,11 +179,11 @@
     (try! (burn-adam-token token-in amount caller))
 
     (print {
-      event: "sell",
+      event: "SellExecuted",
       caller: caller,
       token-in: token-in,
       amount: amount,
-      block-height: block-height,
+      timestamp: block-height,
     })
 
     (ok true)
@@ -198,13 +216,13 @@
       (try! (mint-adam-token token-out amount-out caller))
 
       (print {
-        event: "swap",
+        event: "SwapExecuted",
         caller: caller,
         token-in: token-in,
         amount-in: amount-in,
         token-out: token-out,
         amount-out: amount-out,
-        block-height: block-height,
+        timestamp: block-height,
       })
 
       (ok amount-out)
@@ -251,17 +269,27 @@
       true
     )
 
-    (ok (map-set rates {
+    (map-set rates {
       from: token-from,
       to: token-to,
     } rate
-    ))
+    )
+
+    (print {
+      event: "RateUpdated",
+      token-from: token-from,
+      token-to: token-to,
+      rate: rate,
+      timestamp: block-height,
+    })
+
+    (ok true)
   )
 )
 
 (define-public (set-fee-bps (new-fee-bps uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (<= new-fee-bps MAX-FEE-BPS) ERR-INVALID-FEE)
     (ok (var-set fee-bps new-fee-bps))
   )
@@ -269,21 +297,29 @@
 
 (define-public (pause)
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-pauser tx-sender) ERR-UNAUTHORIZED)
     (ok (var-set paused true))
   )
 )
 
 (define-public (unpause)
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-pauser tx-sender) ERR-UNAUTHORIZED)
     (ok (var-set paused false))
+  )
+)
+
+(define-public (set-treasury-address (address principal))
+  (begin
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
+    (ok (var-set treasury-address address))
   )
 )
 
 (define-public (set-usdc-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set usdc-address (some address)))
   )
@@ -291,7 +327,7 @@
 
 (define-public (set-adusd-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set adusd-address (some address)))
   )
@@ -299,7 +335,7 @@
 
 (define-public (set-adngn-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set adngn-address (some address)))
   )
@@ -307,7 +343,7 @@
 
 (define-public (set-adkes-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set adkes-address (some address)))
   )
@@ -315,7 +351,7 @@
 
 (define-public (set-adghs-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set adghs-address (some address)))
   )
@@ -323,9 +359,20 @@
 
 (define-public (set-adzar-address (address principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq address ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (var-set adzar-address (some address)))
+  )
+)
+
+(define-public (set-admin
+    (account principal)
+    (enabled bool)
+  )
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
+    (ok (map-set admins account enabled))
   )
 )
 
@@ -334,9 +381,20 @@
     (enabled bool)
   )
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq account ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
     (ok (map-set rate-setters account enabled))
+  )
+)
+
+(define-public (set-pauser
+    (account principal)
+    (enabled bool)
+  )
+  (begin
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account ZERO-ADDRESS)) ERR-ZERO-ADDRESS)
+    (ok (map-set pausers account enabled))
   )
 )
 
@@ -366,16 +424,51 @@
   (ok (var-get fee-bps))
 )
 
+(define-read-only (get-treasury-address)
+  (ok (var-get treasury-address))
+)
+
 (define-read-only (get-usdc-address)
   (ok (var-get usdc-address))
+)
+
+(define-read-only (get-adusd-address)
+  (ok (var-get adusd-address))
+)
+
+(define-read-only (get-adngn-address)
+  (ok (var-get adngn-address))
+)
+
+(define-read-only (get-adkes-address)
+  (ok (var-get adkes-address))
+)
+
+(define-read-only (get-adghs-address)
+  (ok (var-get adghs-address))
+)
+
+(define-read-only (get-adzar-address)
+  (ok (var-get adzar-address))
 )
 
 (define-read-only (is-paused)
   (ok (var-get paused))
 )
 
+(define-read-only (is-admin (account principal))
+  (or
+    (is-eq account (var-get contract-owner))
+    (default-to false (map-get? admins account))
+  )
+)
+
 (define-read-only (is-rate-setter (account principal))
   (default-to false (map-get? rate-setters account))
+)
+
+(define-read-only (is-pauser (account principal))
+  (default-to false (map-get? pausers account))
 )
 
 ;; Private functions

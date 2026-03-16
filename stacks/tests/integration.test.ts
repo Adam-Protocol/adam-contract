@@ -29,6 +29,7 @@ describe('Integration Flow', () => {
     // 2. Initialize swap
     simnet.callPublicFn('adam-swap', 'initialize', [
       Cl.principal(deployer),
+      Cl.principal(treasury),
       Cl.principal(usdcMock),
       Cl.principal(adusd),
       Cl.principal(adngn),

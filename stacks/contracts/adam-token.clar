@@ -30,6 +30,14 @@
   principal
   bool
 )
+(define-map pausers
+  principal
+  bool
+)
+(define-map admins
+  principal
+  bool
+)
 
 ;; Fungible token definition
 (define-fungible-token adam-token)
@@ -53,9 +61,11 @@
     (var-set token-symbol symbol)
     (var-set token-decimals decimals)
     (var-set contract-owner owner)
-    ;; Grant initial roles to owner
+    ;; Grant all initial roles to owner
+    (map-set admins owner true)
     (map-set minters owner true)
     (map-set burners owner true)
+    (map-set pausers owner true)
     (ok true)
   )
 )
@@ -85,6 +95,13 @@
       to-print (print to-print)
       0x
     )
+    (print {
+      event: "Transfer",
+      sender: sender,
+      recipient: recipient,
+      amount: amount,
+      timestamp: block-height,
+    })
     (ok true)
   )
 )
@@ -127,7 +144,14 @@
     (asserts! (not (is-eq recipient 'SP000000000000000000002Q6VF78))
       ERR-ZERO-ADDRESS
     )
-    (ft-mint? adam-token amount recipient)
+    (try! (ft-mint? adam-token amount recipient))
+    (print {
+      event: "Mint",
+      recipient: recipient,
+      amount: amount,
+      timestamp: block-height,
+    })
+    (ok true)
   )
 )
 
@@ -141,18 +165,40 @@
     (asserts! (is-burner tx-sender) ERR-NOT-BURNER)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
     (asserts! (not (is-eq owner 'SP000000000000000000002Q6VF78)) ERR-ZERO-ADDRESS)
-    (ft-burn? adam-token amount owner)
+    (try! (ft-burn? adam-token amount owner))
+    (print {
+      event: "Burn",
+      owner: owner,
+      amount: amount,
+      timestamp: block-height,
+    })
+    (ok true)
   )
 )
 
 ;; Role Management
+
+;; Role Management
+
+(define-public (set-admin
+    (account principal)
+    (enabled bool)
+  )
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
+      ERR-ZERO-ADDRESS
+    )
+    (ok (map-set admins account enabled))
+  )
+)
 
 (define-public (set-minter
     (account principal)
     (enabled bool)
   )
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
       ERR-ZERO-ADDRESS
     )
@@ -165,11 +211,24 @@
     (enabled bool)
   )
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
     (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
       ERR-ZERO-ADDRESS
     )
     (ok (map-set burners account enabled))
+  )
+)
+
+(define-public (set-pauser
+    (account principal)
+    (enabled bool)
+  )
+  (begin
+    (asserts! (is-admin tx-sender) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
+      ERR-ZERO-ADDRESS
+    )
+    (ok (map-set pausers account enabled))
   )
 )
 
@@ -187,14 +246,14 @@
 
 (define-public (pause)
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-pauser tx-sender) ERR-UNAUTHORIZED)
     (ok (var-set paused true))
   )
 )
 
 (define-public (unpause)
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (is-pauser tx-sender) ERR-UNAUTHORIZED)
     (ok (var-set paused false))
   )
 )
@@ -205,12 +264,23 @@
 
 ;; Read-only role checks
 
+(define-read-only (is-admin (account principal))
+  (or
+    (is-eq account (var-get contract-owner))
+    (default-to false (map-get? admins account))
+  )
+)
+
 (define-read-only (is-minter (account principal))
   (default-to false (map-get? minters account))
 )
 
 (define-read-only (is-burner (account principal))
   (default-to false (map-get? burners account))
+)
+
+(define-read-only (is-pauser (account principal))
+  (default-to false (map-get? pausers account))
 )
 
 (define-read-only (get-contract-owner)
