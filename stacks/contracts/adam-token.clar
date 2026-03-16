@@ -12,7 +12,7 @@
 ;; Token configuration (set during deployment)
 (define-data-var token-name (string-ascii 32) "Adam Token")
 (define-data-var token-symbol (string-ascii 32) "ADAM")
-(define-data-var token-decimals uint u6)
+(define-data-var token-decimals uint u18)
 (define-constant token-uri none)
 
 (define-data-var contract-owner principal tx-sender)
