@@ -11,12 +11,18 @@ describe('Adam Swap', () => {
   const usdcMock = `${DEPLOYER()}.usdc-mock`;
   const getAdusdMock = () => `${DEPLOYER()}.adam-token-adusd`;
   const getAdngnMock = () => `${DEPLOYER()}.adam-token-adngn`;
+  const getAdkesMock = () => `${DEPLOYER()}.adam-token-adkes`;
+  const getAdghsMock = () => `${DEPLOYER()}.adam-token-adghs`;
+  const getAdzarMock = () => `${DEPLOYER()}.adam-token-adzar`;
 
   it('should initialize correctly', () => {
     const deployer = DEPLOYER();
     const treasury = TREASURY();
     const adusdMock = getAdusdMock();
     const adngnMock = getAdngnMock();
+    const adkesMock = getAdkesMock();
+    const adghsMock = getAdghsMock();
+    const adzarMock = getAdzarMock();
 
     const { result } = simnet.callPublicFn(
       'adam-swap',
@@ -26,6 +32,9 @@ describe('Adam Swap', () => {
         Cl.principal(usdcMock),
         Cl.principal(adusdMock),
         Cl.principal(adngnMock),
+        Cl.principal(adkesMock),
+        Cl.principal(adghsMock),
+        Cl.principal(adzarMock),
         Cl.uint(50),
       ],
       deployer

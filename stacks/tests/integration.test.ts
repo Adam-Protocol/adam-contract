@@ -10,6 +10,9 @@ describe('Integration Flow', () => {
   const usdcMock = `${DEPLOYER()}.usdc-mock`;
   const getAdusd = () => `${DEPLOYER()}.adam-token-adusd`;
   const getAdngn = () => `${DEPLOYER()}.adam-token-adngn`;
+  const getAdkes = () => `${DEPLOYER()}.adam-token-adkes`;
+  const getAdghs = () => `${DEPLOYER()}.adam-token-adghs`;
+  const getAdzar = () => `${DEPLOYER()}.adam-token-adzar`;
   const getSwap = () => `${DEPLOYER()}.adam-swap`;
 
   it('should setup the complete system', () => {
@@ -29,6 +32,9 @@ describe('Integration Flow', () => {
       Cl.principal(usdcMock),
       Cl.principal(adusd),
       Cl.principal(adngn),
+      Cl.principal(getAdkes()),
+      Cl.principal(getAdghs()),
+      Cl.principal(getAdzar()),
       Cl.uint(50)
     ], deployer);
 
@@ -59,6 +65,9 @@ describe('Integration Flow', () => {
     simnet.callPublicFn('adam-swap', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
     simnet.callPublicFn('adam-swap', 'set-rate', [Cl.principal(usdcMock), Cl.principal(adusd), Cl.uint(1000000000000000000n)], deployer); // 1:1 rate
     simnet.callPublicFn('adam-token-adusd', 'set-minter', [Cl.principal(getSwap()), Cl.bool(true)], deployer);
+    
+    // Mint USDC to wallet1 for testing
+    simnet.callPublicFn('usdcx', 'mint', [Cl.uint(10000000n), Cl.principal(wallet1)], deployer);
 
     const amountIn = 1000000n; // 1 USDC
     const { result } = simnet.callPublicFn(

@@ -8,6 +8,7 @@
 (define-constant ERR-ZERO-AMOUNT (err u103))
 (define-constant ERR-ZERO-ADDRESS (err u104))
 (define-constant ERR-PAUSED (err u105))
+(define-constant ZERO-ADDRESS 'SP000000000000000000002Q6VF78)
 
 ;; Token configuration (set during deployment)
 (define-data-var token-name (string-ascii 32) "Adam Token")
@@ -42,6 +43,12 @@
   )
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    ;; Validate inputs
+    (asserts! (> (len name) u0) ERR-ZERO-AMOUNT)
+    (asserts! (> (len symbol) u0) ERR-ZERO-AMOUNT)
+    (asserts! (<= decimals u18) ERR-ZERO-AMOUNT)
+    (asserts! (not (is-eq owner 'SP000000000000000000002Q6VF78)) ERR-ZERO-ADDRESS)
+
     (var-set token-name name)
     (var-set token-symbol symbol)
     (var-set token-decimals decimals)
@@ -62,9 +69,17 @@
     (memo (optional (buff 34)))
   )
   (begin
-    (asserts! (not (var-get paused)) ERR-PAUSED)
-    (asserts! (is-eq tx-sender sender) ERR-UNAUTHORIZED)
-    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    ;; Batch assertions
+    (asserts!
+      (and
+        (not (var-get paused))
+        (is-eq tx-sender sender)
+        (> amount u0)
+        (not (is-eq recipient ZERO-ADDRESS))
+      )
+      ERR-PAUSED
+    )
+
     (try! (ft-transfer? adam-token amount sender recipient))
     (match memo
       to-print (print to-print)
@@ -125,6 +140,7 @@
     (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (is-burner tx-sender) ERR-NOT-BURNER)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (asserts! (not (is-eq owner 'SP000000000000000000002Q6VF78)) ERR-ZERO-ADDRESS)
     (ft-burn? adam-token amount owner)
   )
 )
@@ -137,6 +153,9 @@
   )
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
+      ERR-ZERO-ADDRESS
+    )
     (ok (map-set minters account enabled))
   )
 )
@@ -147,6 +166,9 @@
   )
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq account 'SP000000000000000000002Q6VF78))
+      ERR-ZERO-ADDRESS
+    )
     (ok (map-set burners account enabled))
   )
 )
@@ -154,6 +176,9 @@
 (define-public (set-contract-owner (new-owner principal))
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-UNAUTHORIZED)
+    (asserts! (not (is-eq new-owner 'SP000000000000000000002Q6VF78))
+      ERR-ZERO-ADDRESS
+    )
     (ok (var-set contract-owner new-owner))
   )
 )

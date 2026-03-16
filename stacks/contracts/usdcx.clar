@@ -18,11 +18,23 @@
 
 ;; SIP-010 Functions
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+(define-public (transfer
+    (amount uint)
+    (sender principal)
+    (recipient principal)
+    (memo (optional (buff 34)))
+  )
   (begin
     (asserts! (is-eq tx-sender sender) err-not-token-owner)
+    (asserts! (> amount u0) err-insufficient-balance)
+    (asserts! (not (is-eq recipient 'SP000000000000000000002Q6VF78))
+      err-not-token-owner
+    )
     (try! (ft-transfer? usdcx amount sender recipient))
-    (match memo to-print (print to-print) 0x)
+    (match memo
+      to-print (print to-print)
+      0x
+    )
     (ok true)
   )
 )
@@ -53,16 +65,25 @@
 
 ;; Admin functions
 
-(define-public (mint (amount uint) (recipient principal))
+(define-public (mint
+    (amount uint)
+    (recipient principal)
+  )
   (begin
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (> amount u0) err-insufficient-balance)
+    (asserts! (not (is-eq recipient 'SP000000000000000000002Q6VF78))
+      err-owner-only
+    )
     (ft-mint? usdcx amount recipient)
   )
 )
 
 (define-public (burn (amount uint))
   (begin
-    (asserts! (> (ft-get-balance usdcx tx-sender) amount) err-insufficient-balance)
+    (asserts! (> (ft-get-balance usdcx tx-sender) amount)
+      err-insufficient-balance
+    )
     (ft-burn? usdcx amount tx-sender)
   )
 )
