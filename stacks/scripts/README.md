@@ -33,6 +33,35 @@ This directory contains deployment and utility scripts for the Adam Protocol Sta
 ./scripts/deploy-complete.sh mainnet ST2TREASURY123... v2
 ```
 
+### initialize-contracts.ts
+**Purpose**: Automated initialization of deployed contracts with all necessary configuration
+
+**Usage**:
+```bash
+pnpm run init
+```
+
+**What it does**:
+1. Initializes all token contracts (ADUSD, ADNGN, ADKES, ADGHS, ADZAR)
+2. Initializes swap contract with treasury and fee settings
+3. Grants minter roles to swap contract
+4. Grants burner roles to swap contract
+5. Sets all exchange rates from .env configuration
+6. Grants rate-setter role to backend (if configured)
+
+**Configuration**: All settings are read from `.env` file:
+- `STACKS_TREASURY_ADDRESS` - Treasury for fee collection
+- `STACKS_BACKEND_ADDRESS` - Backend service for rate updates
+- `SWAP_FEE_BPS` - Transaction fee (50 = 0.5%)
+- `RATE_*` - Exchange rates for all token pairs
+- `STACKS_NETWORK` - testnet or mainnet
+
+**Example**:
+```bash
+# Configure .env first, then run
+pnpm run init
+```
+
 ### init-v2-manual.md
 **Purpose**: Step-by-step manual initialization guide for deployed contracts
 
@@ -42,7 +71,7 @@ This directory contains deployment and utility scripts for the Adam Protocol Sta
 - Exchange rate configuration
 - Verification steps
 
-**When to use**: After running `deploy-complete.sh`, follow this guide to initialize and configure the deployed contracts.
+**When to use**: If you prefer manual control or the automated script fails.
 
 ## USDCX Utility Scripts
 
@@ -95,8 +124,14 @@ pnpm run usdcx:quick
 
 1. **Prepare environment**:
    ```bash
-   # Ensure .env has your deployer key
-   echo 'STACKS_DEPLOYER_PRIVATE_KEY="your mnemonic here"' > .env
+   # Copy example and configure
+   cp .env.example .env
+   
+   # Edit .env with your values:
+   # - STACKS_DEPLOYER_PRIVATE_KEY (required)
+   # - STACKS_TREASURY_ADDRESS (optional, defaults to deployer)
+   # - STACKS_BACKEND_ADDRESS (optional, for rate-setter role)
+   # - Exchange rates (optional, defaults provided)
    ```
 
 2. **Get testnet STX**:
@@ -108,9 +143,17 @@ pnpm run usdcx:quick
    ./scripts/deploy-complete.sh testnet
    ```
 
-4. **Initialize contracts**:
-   - Follow instructions in `scripts/init-v2-manual.md`
-   - Use Stacks Explorer or clarinet console
+4. **Initialize contracts automatically**:
+   ```bash
+   pnpm run init
+   ```
+   
+   This will:
+   - Initialize all tokens
+   - Initialize swap with treasury
+   - Grant all necessary roles
+   - Set exchange rates
+   - Configure backend access (if specified)
 
 5. **Deploy USDCX (if needed)**:
    ```bash
@@ -124,6 +167,8 @@ pnpm run usdcx:quick
    
    # Check balance
    pnpm run usdcx:balance <your-address>
+   
+   # Test buy operation via frontend or backend
    ```
 
 ### For Updates

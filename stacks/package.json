@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
+    "init": "tsx scripts/initialize-contracts.ts",
     "usdcx": "tsx scripts/usdcx-manager.ts",
     "usdcx:deploy": "tsx scripts/usdcx-manager.ts deploy",
     "usdcx:mint": "tsx scripts/usdcx-manager.ts mint",
