@@ -42,6 +42,38 @@ clarity_version = 2
 epoch = 2.5
 depends_on = ["adam-token-adusd", "adam-token-adngn", "adam-token-adkes", "adam-token-adghs", "adam-token-adzar"]
 
+# V2 contracts with updated features (RBAC, treasury, structured events)
+[contracts.adam-token-adusd-v2]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-token-adngn-v2]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-token-adkes-v2]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-token-adghs-v2]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-token-adzar-v2]
+path = "contracts/adam-token.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.adam-swap-v2]
+path = "contracts/adam-swap.clar"
+clarity_version = 2
+epoch = 2.5
+depends_on = ["adam-token-adusd-v2", "adam-token-adngn-v2", "adam-token-adkes-v2", "adam-token-adghs-v2", "adam-token-adzar-v2"]
+
 [repl.analysis]
 passes = ["check_checker"]
 
