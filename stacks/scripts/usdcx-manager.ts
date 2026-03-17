@@ -5,17 +5,16 @@
  * Consolidated script for deploying, minting, and checking USDCX test token
  * 
  * Usage:
- *   npx tsx scripts/usdcx-manager.ts deploy
- *   npx tsx scripts/usdcx-manager.ts mint <recipient> <amount>
- *   npx tsx scripts/usdcx-manager.ts balance <address>
- *   npx tsx scripts/usdcx-manager.ts quick-setup
+ *   pnpm run usdcx deploy
+ *   pnpm run usdcx mint <recipient> <amount>
+ *   pnpm run usdcx balance <address>
+ *   pnpm run usdcx quick-setup
  */
 
 import {
   makeContractDeploy,
   makeContractCall,
   broadcastTransaction,
-  callReadOnlyFunction,
   AnchorMode,
   PostConditionMode,
   uintCV,
@@ -35,6 +34,7 @@ const __dirname = path.dirname(__filename);
 
 const MNEMONIC = process.env.STACKS_DEPLOYER_PRIVATE_KEY?.replace(/"/g, '') || '';
 const network = STACKS_TESTNET;
+const API_URL = 'https://api.testnet.hiro.so';
 
 // Helper to get wallet info
 async function getWalletInfo() {
@@ -61,7 +61,7 @@ async function waitForTransaction(txid: string, maxAttempts = 30): Promise<boole
   
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      const response = await fetch(`${network.url}/extended/v1/tx/${txid}`);
+      const response = await fetch(`${API_URL}/extended/v1/tx/${txid}`);
       const data = await response.json();
       
       if (data.tx_status === 'success') {
@@ -193,24 +193,27 @@ async function checkBalance(checkAddress?: string) {
   console.log(`Address: ${targetAddress}\n`);
 
   try {
-    const result = await callReadOnlyFunction({
-      contractAddress: address,
-      contractName: 'usdcx',
-      functionName: 'get-balance',
-      functionArgs: [standardPrincipalCV(targetAddress)],
-      network,
-      senderAddress: targetAddress,
-    });
-
-    if (result.type === 'ok') {
-      const balance = result.value.value;
+    // Use Stacks API account endpoint to get FT balances
+    const url = `${API_URL}/extended/v1/address/${targetAddress}/balances`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.fungible_tokens) {
+      const usdcxKey = `${address}.usdcx::usdcx`;
+      const balance = data.fungible_tokens[usdcxKey]?.balance || '0';
       const formatted = Number(balance) / 1_000000;
       
       console.log('✅ Balance retrieved successfully!');
       console.log(`\nRaw: ${balance} micro-USDCX`);
       console.log(`Formatted: ${formatted} USDCX`);
+      
+      if (formatted === 0) {
+        console.log('\n💡 Balance is 0. You may need to mint tokens first.');
+        console.log(`   Run: pnpm run usdcx:mint ${targetAddress} 1000000000`);
+      }
     } else {
-      console.error('❌ Failed to get balance:', result);
+      console.error('❌ Failed to get balance data');
     }
   } catch (error) {
     console.error('❌ Error:', error);
@@ -275,15 +278,15 @@ async function main() {
       console.log('USDCX Token Manager');
       console.log('==================\n');
       console.log('Usage:');
-      console.log('  npx tsx scripts/usdcx-manager.ts deploy');
-      console.log('  npx tsx scripts/usdcx-manager.ts mint [recipient] [amount]');
-      console.log('  npx tsx scripts/usdcx-manager.ts balance [address]');
-      console.log('  npx tsx scripts/usdcx-manager.ts quick-setup');
+      console.log('  pnpm run usdcx deploy');
+      console.log('  pnpm run usdcx mint [recipient] [amount]');
+      console.log('  pnpm run usdcx balance [address]');
+      console.log('  pnpm run usdcx quick-setup');
       console.log('\nExamples:');
-      console.log('  npx tsx scripts/usdcx-manager.ts deploy');
-      console.log('  npx tsx scripts/usdcx-manager.ts mint ST2NEB... 1000000000');
-      console.log('  npx tsx scripts/usdcx-manager.ts balance ST2NEB...');
-      console.log('  npx tsx scripts/usdcx-manager.ts quick-setup');
+      console.log('  pnpm run usdcx:deploy');
+      console.log('  pnpm run usdcx:mint ST2NEB... 1000000000');
+      console.log('  pnpm run usdcx:balance ST2NEB...');
+      console.log('  pnpm run usdcx:quick');
       process.exit(1);
   }
 }

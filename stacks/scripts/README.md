@@ -54,38 +54,38 @@ These scripts are for managing the test USDC token (USDCX) used in development a
 **Usage**:
 ```bash
 # Show help
-npm run usdcx
+pnpm run usdcx
 
 # Deploy USDCX contract
-npm run usdcx:deploy
+pnpm run usdcx:deploy
 
 # Mint tokens to an address
-npm run usdcx:mint <recipient-address> <amount>
+pnpm run usdcx:mint <recipient-address> <amount>
 
 # Check balance
-npm run usdcx:balance <address>
+pnpm run usdcx:balance <address>
 
 # Quick setup (deploy + mint + check)
-npm run usdcx:quick
+pnpm run usdcx:quick
 ```
 
 **Examples**:
 ```bash
 # Deploy USDCX
-npm run usdcx:deploy
+pnpm run usdcx:deploy
 
 # Mint 1000 USDCX to wallet
-npm run usdcx:mint ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND 1000000000
+pnpm run usdcx:mint ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND 1000000000
 
 # Check balance
-npm run usdcx:balance ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND
+pnpm run usdcx:balance ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND
 
 # Complete setup in one command
-npm run usdcx:quick
+pnpm run usdcx:quick
 ```
 
 **Requirements**: 
-- Node.js and npm installed
+- Node.js and pnpm installed
 - STACKS_DEPLOYER_PRIVATE_KEY in .env file
 - Testnet STX for deployment fees
 
@@ -114,16 +114,16 @@ npm run usdcx:quick
 
 5. **Deploy USDCX (if needed)**:
    ```bash
-   npm run usdcx:quick
+   pnpm run usdcx:quick
    ```
 
 6. **Test the system**:
    ```bash
    # Mint test USDCX
-   npm run usdcx:mint <your-address> 1000000000
+   pnpm run usdcx:mint <your-address> 1000000000
    
    # Check balance
-   npm run usdcx:balance <your-address>
+   pnpm run usdcx:balance <your-address>
    ```
 
 ### For Updates
