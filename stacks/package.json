@@ -6,9 +6,11 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "deploy:usdcx": "tsx scripts/deploy-usdcx.ts",
-    "mint:usdcx": "tsx scripts/mint-usdcx.ts",
-    "check:usdcx": "tsx scripts/check-usdcx-balance.ts"
+    "usdcx": "tsx scripts/usdcx-manager.ts",
+    "usdcx:deploy": "tsx scripts/usdcx-manager.ts deploy",
+    "usdcx:mint": "tsx scripts/usdcx-manager.ts mint",
+    "usdcx:balance": "tsx scripts/usdcx-manager.ts balance",
+    "usdcx:quick": "tsx scripts/usdcx-manager.ts quick-setup"
   },
   "keywords": [],
   "author": "",

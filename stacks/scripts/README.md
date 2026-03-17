@@ -48,53 +48,46 @@ This directory contains deployment and utility scripts for the Adam Protocol Sta
 
 These scripts are for managing the test USDC token (USDCX) used in development and testing.
 
-### deploy-usdcx.ts
-**Purpose**: Deploy USDCX test token to testnet
+### usdcx-manager.ts
+**Purpose**: All-in-one USDCX token management tool
 
 **Usage**:
 ```bash
-npx tsx scripts/deploy-usdcx.ts
+# Show help
+npm run usdcx
+
+# Deploy USDCX contract
+npm run usdcx:deploy
+
+# Mint tokens to an address
+npm run usdcx:mint <recipient-address> <amount>
+
+# Check balance
+npm run usdcx:balance <address>
+
+# Quick setup (deploy + mint + check)
+npm run usdcx:quick
+```
+
+**Examples**:
+```bash
+# Deploy USDCX
+npm run usdcx:deploy
+
+# Mint 1000 USDCX to wallet
+npm run usdcx:mint ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND 1000000000
+
+# Check balance
+npm run usdcx:balance ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND
+
+# Complete setup in one command
+npm run usdcx:quick
 ```
 
 **Requirements**: 
 - Node.js and npm installed
 - STACKS_DEPLOYER_PRIVATE_KEY in .env file
 - Testnet STX for deployment fees
-
-### quick-deploy-usdcx.sh
-**Purpose**: Quick deployment wrapper for USDCX
-
-**Usage**:
-```bash
-./scripts/quick-deploy-usdcx.sh
-```
-
-### mint-usdcx.ts
-**Purpose**: Mint USDCX tokens to a specified address
-
-**Usage**:
-```bash
-npx tsx scripts/mint-usdcx.ts <recipient-address> <amount>
-```
-
-**Example**:
-```bash
-# Mint 1000 USDCX to wallet
-npx tsx scripts/mint-usdcx.ts ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND 1000000000
-```
-
-### check-usdcx-balance.ts
-**Purpose**: Check USDCX balance for an address
-
-**Usage**:
-```bash
-npx tsx scripts/check-usdcx-balance.ts <address>
-```
-
-**Example**:
-```bash
-npx tsx scripts/check-usdcx-balance.ts ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND
-```
 
 ## Deployment Workflow
 
@@ -121,16 +114,16 @@ npx tsx scripts/check-usdcx-balance.ts ST2NEB84ASENDXKYGJPQW86YXQCEFEX2ZQPG87ND
 
 5. **Deploy USDCX (if needed)**:
    ```bash
-   ./scripts/quick-deploy-usdcx.sh
+   npm run usdcx:quick
    ```
 
 6. **Test the system**:
    ```bash
    # Mint test USDCX
-   npx tsx scripts/mint-usdcx.ts <your-address> 1000000000
+   npm run usdcx:mint <your-address> 1000000000
    
    # Check balance
-   npx tsx scripts/check-usdcx-balance.ts <your-address>
+   npm run usdcx:balance <your-address>
    ```
 
 ### For Updates
