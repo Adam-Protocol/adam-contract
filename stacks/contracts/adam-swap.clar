@@ -12,6 +12,7 @@
 (define-constant ERR-ZERO-ADDRESS (err u307))
 (define-constant ERR-PAUSED (err u308))
 (define-constant ERR-RATE-LIMIT-EXCEEDED (err u309))
+(define-constant ERR-SAME-ADDRESS (err u310))
 
 ;; Constants
 (define-constant RATE-PRECISION u1000000000000000000) ;; 1e18
@@ -135,17 +136,18 @@
   (let (
       (caller tx-sender)
       (token-in (unwrap! (var-get usdc-address) ERR-ZERO-ADDRESS))
+      (treasury (var-get treasury-address))
     )
     ;; Validate inputs first (including untrusted token-out)
     (asserts! (not (var-get paused)) ERR-PAUSED)
     (asserts! (> amount-in u0) ERR-ZERO-AMOUNT)
     (asserts! (is-valid-adam-token token-out) ERR-INVALID-TOKEN)
+    ;; Prevent same-address transfers (would cause ft-transfer? err u2)
+    (asserts! (not (is-eq caller treasury)) ERR-SAME-ADDRESS)
 
     (let ((amount-out (try! (apply-rate-and-fee token-in token-out amount-in))))
       ;; Transfer USDC from caller to treasury
-      (try! (contract-call? .usdcx transfer amount-in caller (var-get treasury-address)
-        none
-      ))
+      (try! (contract-call? .usdcx transfer amount-in caller treasury none))
 
       ;; Mint Adam tokens based on token-out
       (try! (mint-adam-token token-out amount-out caller))
