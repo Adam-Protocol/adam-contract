@@ -7,6 +7,8 @@
   "scripts": {
     "test": "vitest",
     "init": "tsx scripts/initialize-contracts.ts",
+    "check-treasury": "tsx scripts/check-treasury.ts",
+    "update-treasury": "tsx scripts/update-treasury.ts",
     "usdcx": "tsx scripts/usdcx-manager.ts",
     "usdcx:deploy": "tsx scripts/usdcx-manager.ts deploy",
     "usdcx:mint": "tsx scripts/usdcx-manager.ts mint",
