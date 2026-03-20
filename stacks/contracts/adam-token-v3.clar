@@ -1,4 +1,5 @@
-;; Adam Token - SIP-010 Fungible Token with Role-Based Access Control
+;; Adam Token V3 - SIP-010 Fungible Token with Role-Based Access Control
+;; 6 decimal precision to match USDC standard
 ;; Deployed multiple times as ADUSD, ADNGN, ADKES, ADGHS, ADZAR
 
 ;; Error codes
@@ -13,7 +14,7 @@
 ;; Token configuration (set during deployment)
 (define-data-var token-name (string-ascii 32) "Adam Token")
 (define-data-var token-symbol (string-ascii 32) "ADAM")
-(define-data-var token-decimals uint u18)
+(define-data-var token-decimals uint u6)
 (define-constant token-uri none)
 
 (define-data-var contract-owner principal tx-sender)
@@ -54,7 +55,7 @@
     ;; Validate inputs
     (asserts! (> (len name) u0) ERR-ZERO-AMOUNT)
     (asserts! (> (len symbol) u0) ERR-ZERO-AMOUNT)
-    (asserts! (<= decimals u18) ERR-ZERO-AMOUNT)
+    (asserts! (<= decimals u6) ERR-ZERO-AMOUNT)
     (asserts! (not (is-eq owner 'SP000000000000000000002Q6VF78)) ERR-ZERO-ADDRESS)
 
     (var-set token-name name)
@@ -175,8 +176,6 @@
     (ok true)
   )
 )
-
-;; Role Management
 
 ;; Role Management
 

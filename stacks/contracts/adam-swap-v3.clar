@@ -15,7 +15,7 @@
 (define-constant ERR-SAME-ADDRESS (err u310))
 
 ;; Constants
-(define-constant RATE-PRECISION u1000000000000000000) ;; 1e18
+(define-constant RATE-PRECISION u1000000) ;; 1e6 (6 decimals to match token decimals)
 (define-constant MAX-FEE-BPS u1000) ;; 10%
 (define-constant BPS-DENOMINATOR u10000)
 (define-constant MAX-RATE-CHANGE-BPS u2000) ;; 20% max change in one update
@@ -512,15 +512,15 @@
     (recipient principal)
   )
   (if (is-eq token (unwrap! (var-get adusd-address) ERR-INVALID-TOKEN))
-    (as-contract (contract-call? .adam-token-adusd-v2 mint amount recipient))
+    (as-contract (contract-call? .adam-token-adusd-v3 mint amount recipient))
     (if (is-eq token (unwrap! (var-get adngn-address) ERR-INVALID-TOKEN))
-      (as-contract (contract-call? .adam-token-adngn-v2 mint amount recipient))
+      (as-contract (contract-call? .adam-token-adngn-v3 mint amount recipient))
       (if (is-eq token (unwrap! (var-get adkes-address) ERR-INVALID-TOKEN))
-        (as-contract (contract-call? .adam-token-adkes-v2 mint amount recipient))
+        (as-contract (contract-call? .adam-token-adkes-v3 mint amount recipient))
         (if (is-eq token (unwrap! (var-get adghs-address) ERR-INVALID-TOKEN))
-          (as-contract (contract-call? .adam-token-adghs-v2 mint amount recipient))
+          (as-contract (contract-call? .adam-token-adghs-v3 mint amount recipient))
           (if (is-eq token (unwrap! (var-get adzar-address) ERR-INVALID-TOKEN))
-            (as-contract (contract-call? .adam-token-adzar-v2 mint amount recipient))
+            (as-contract (contract-call? .adam-token-adzar-v3 mint amount recipient))
             ERR-INVALID-TOKEN
           )
         )
@@ -536,15 +536,15 @@
     (owner principal)
   )
   (if (is-eq token (unwrap! (var-get adusd-address) ERR-INVALID-TOKEN))
-    (as-contract (contract-call? .adam-token-adusd-v2 burn amount owner))
+    (as-contract (contract-call? .adam-token-adusd-v3 burn amount owner))
     (if (is-eq token (unwrap! (var-get adngn-address) ERR-INVALID-TOKEN))
-      (as-contract (contract-call? .adam-token-adngn-v2 burn amount owner))
+      (as-contract (contract-call? .adam-token-adngn-v3 burn amount owner))
       (if (is-eq token (unwrap! (var-get adkes-address) ERR-INVALID-TOKEN))
-        (as-contract (contract-call? .adam-token-adkes-v2 burn amount owner))
+        (as-contract (contract-call? .adam-token-adkes-v3 burn amount owner))
         (if (is-eq token (unwrap! (var-get adghs-address) ERR-INVALID-TOKEN))
-          (as-contract (contract-call? .adam-token-adghs-v2 burn amount owner))
+          (as-contract (contract-call? .adam-token-adghs-v3 burn amount owner))
           (if (is-eq token (unwrap! (var-get adzar-address) ERR-INVALID-TOKEN))
-            (as-contract (contract-call? .adam-token-adzar-v2 burn amount owner))
+            (as-contract (contract-call? .adam-token-adzar-v3 burn amount owner))
             ERR-INVALID-TOKEN
           )
         )

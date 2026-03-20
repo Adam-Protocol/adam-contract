@@ -6,17 +6,16 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "init": "tsx scripts/initialize-contracts.ts",
+    "v3:deploy": "tsx scripts/deploy-v3.ts",
+    "v3:init": "tsx scripts/initialize-v3.ts",
+    "update-rates": "tsx scripts/update-rates.ts",
     "check-treasury": "tsx scripts/check-treasury.ts",
     "update-treasury": "tsx scripts/update-treasury.ts",
     "usdcx": "tsx scripts/usdcx-manager.ts",
     "usdcx:deploy": "tsx scripts/usdcx-manager.ts deploy",
     "usdcx:mint": "tsx scripts/usdcx-manager.ts mint",
     "usdcx:balance": "tsx scripts/usdcx-manager.ts balance",
-    "usdcx:quick": "tsx scripts/usdcx-manager.ts quick-setup",
-    "usdcx-v2:deploy-and-mint": "tsx scripts/deploy-usdcx-v2.ts",
-    "usdcx-v3:update-swap": "tsx scripts/update-usdcx-address.ts",
-    "v3:init": "tsx scripts/initialize-v3.ts"
+    "usdcx:quick": "tsx scripts/usdcx-manager.ts quick-setup"
   },
   "keywords": [],
   "author": "",

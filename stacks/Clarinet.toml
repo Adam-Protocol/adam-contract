@@ -6,75 +6,34 @@ telemetry = false
 cache_dir = "./.cache"
 requirements = []
 
-[contracts.adam-token-adusd]
-path = "contracts/adam-token.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.adam-token-adngn]
-path = "contracts/adam-token.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.adam-token-adkes]
-path = "contracts/adam-token.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.adam-token-adghs]
-path = "contracts/adam-token.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.adam-token-adzar]
-path = "contracts/adam-token.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.usdcx]
-path = "contracts/usdcx.clar"
-clarity_version = 2
-epoch = 2.5
-
-[contracts.usdcx-v2]
-path = "contracts/usdcx-v2.clar"
-clarity_version = 2
-epoch = 2.5
-
+# V3 Contracts - 6 decimal precision
 [contracts.usdcx-v3]
 path = "contracts/usdcx-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-swap]
-path = "contracts/adam-swap.clar"
-clarity_version = 2
-epoch = 2.5
-depends_on = ["adam-token-adusd", "adam-token-adngn", "adam-token-adkes", "adam-token-adghs", "adam-token-adzar"]
-
-# V2 contracts with updated features (RBAC, treasury, structured events)
-[contracts.adam-token-adusd-v2]
-path = "contracts/adam-token.clar"
+[contracts.adam-token-adusd-v3]
+path = "contracts/adam-token-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-token-adngn-v2]
-path = "contracts/adam-token.clar"
+[contracts.adam-token-adngn-v3]
+path = "contracts/adam-token-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-token-adkes-v2]
-path = "contracts/adam-token.clar"
+[contracts.adam-token-adkes-v3]
+path = "contracts/adam-token-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-token-adghs-v2]
-path = "contracts/adam-token.clar"
+[contracts.adam-token-adghs-v3]
+path = "contracts/adam-token-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-token-adzar-v2]
-path = "contracts/adam-token.clar"
+[contracts.adam-token-adzar-v3]
+path = "contracts/adam-token-v3.clar"
 clarity_version = 2
 epoch = 2.5
 
@@ -82,7 +41,7 @@ epoch = 2.5
 path = "contracts/adam-swap-v3.clar"
 clarity_version = 2
 epoch = 2.5
-depends_on = ["adam-token-adusd-v2", "adam-token-adngn-v2", "adam-token-adkes-v2", "adam-token-adghs-v2", "adam-token-adzar-v2", "usdcx-v3"]
+depends_on = ["adam-token-adusd-v3", "adam-token-adngn-v3", "adam-token-adkes-v3", "adam-token-adghs-v3", "adam-token-adzar-v3", "usdcx-v3"]
 
 [repl.analysis]
 passes = ["check_checker"]

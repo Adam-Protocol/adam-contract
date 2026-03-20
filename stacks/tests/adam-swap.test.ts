@@ -25,7 +25,7 @@ describe('Adam Swap', () => {
     const adzarMock = getAdzarMock();
 
     const { result } = simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'initialize',
       [
         Cl.principal(deployer),
@@ -42,8 +42,8 @@ describe('Adam Swap', () => {
     );
     expect(result).toBeOk(Cl.bool(true));
 
-    expect(simnet.callReadOnlyFn('adam-swap', 'get-fee-bps', [], deployer).result).toBeOk(Cl.uint(50));
-    expect(simnet.callReadOnlyFn('adam-swap', 'get-usdc-address', [], deployer).result).toBeOk(Cl.some(Cl.principal(usdcMock)));
+    expect(simnet.callReadOnlyFn('adam-swap-v3', 'get-fee-bps', [], deployer).result).toBeOk(Cl.uint(50));
+    expect(simnet.callReadOnlyFn('adam-swap-v3', 'get-usdc-address', [], deployer).result).toBeOk(Cl.some(Cl.principal(usdcMock)));
   });
 
   it('should set and get exchange rates', () => {
@@ -52,17 +52,17 @@ describe('Adam Swap', () => {
     const adusdMock = getAdusdMock();
     const currentRate = 1500n * 10n**18n;
 
-    simnet.callPublicFn('adam-swap', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
     // Set initial rate
     const { result } = simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'set-rate',
       [Cl.principal(usdcMock), Cl.principal(adngnMock), Cl.uint(currentRate)],
       deployer
     );
     expect(result).toBeOk(Cl.bool(true));
 
-    const storedRate = simnet.callReadOnlyFn('adam-swap', 'get-rate', [Cl.principal(usdcMock), Cl.principal(adngnMock)], deployer);
+    const storedRate = simnet.callReadOnlyFn('adam-swap-v3', 'get-rate', [Cl.principal(usdcMock), Cl.principal(adngnMock)], deployer);
     expect(storedRate.result).toBeOk(Cl.uint(currentRate));
   });
 
@@ -71,11 +71,11 @@ describe('Adam Swap', () => {
     const adngnMock = getAdngnMock();
     const currentRate = 1500n * 10n**18n;
     
-    simnet.callPublicFn('adam-swap', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
 
     // Set initial rate first
     simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'set-rate',
       [Cl.principal(usdcMock), Cl.principal(adngnMock), Cl.uint(currentRate)],
       deployer
@@ -84,7 +84,7 @@ describe('Adam Swap', () => {
     // Try to set it to 2000 (+33% change) -> should fail (limit is 20%)
     const highRate = 2000n * 10n**18n;
     const { result: failResult } = simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'set-rate',
       [Cl.principal(usdcMock), Cl.principal(adngnMock), Cl.uint(highRate)],
       deployer
@@ -94,7 +94,7 @@ describe('Adam Swap', () => {
     // Try to set it to 1700 (+13% change) -> should succeed
     const goodRate = 1700n * 10n**18n;
     const { result: successResult } = simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'set-rate',
       [Cl.principal(usdcMock), Cl.principal(adngnMock), Cl.uint(goodRate)],
       deployer
@@ -106,18 +106,18 @@ describe('Adam Swap', () => {
     const deployer = DEPLOYER();
     const adusdMock = getAdusdMock();
     const usdcMockAddress = usdcMock;
-    simnet.callPublicFn('adam-swap', 'set-usdc-address', [Cl.principal(usdcMockAddress)], deployer);
-    simnet.callPublicFn('adam-swap', 'set-adusd-address', [Cl.principal(adusdMock)], deployer);
-    simnet.callPublicFn('adam-swap', 'set-adngn-address', [Cl.principal(getAdngnMock())], deployer);
-    simnet.callPublicFn('adam-swap', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
-    simnet.callPublicFn('adam-swap', 'set-rate', [Cl.principal(adusdMock), Cl.principal(getAdngnMock()), Cl.uint(150000n)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-usdc-address', [Cl.principal(usdcMockAddress)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-adusd-address', [Cl.principal(adusdMock)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-adngn-address', [Cl.principal(getAdngnMock())], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-rate-setter', [Cl.principal(deployer), Cl.bool(true)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'set-rate', [Cl.principal(adusdMock), Cl.principal(getAdngnMock()), Cl.uint(150000n)], deployer);
     
-    simnet.callPublicFn('adam-swap', 'set-pauser', [Cl.principal(deployer), Cl.bool(true)], deployer);
-    simnet.callPublicFn('adam-swap', 'pause', [], deployer);
-    expect(simnet.callReadOnlyFn('adam-swap', 'is-paused', [], deployer).result).toBeOk(Cl.bool(true));
+    simnet.callPublicFn('adam-swap-v3', 'set-pauser', [Cl.principal(deployer), Cl.bool(true)], deployer);
+    simnet.callPublicFn('adam-swap-v3', 'pause', [], deployer);
+    expect(simnet.callReadOnlyFn('adam-swap-v3', 'is-paused', [], deployer).result).toBeOk(Cl.bool(true));
 
     const { result } = simnet.callPublicFn(
-      'adam-swap',
+      'adam-swap-v3',
       'swap',
       [
         Cl.principal(adusdMock),
@@ -129,7 +129,7 @@ describe('Adam Swap', () => {
     );
     expect(result).toBeErr(Cl.uint(308)); // ERR-PAUSED
 
-    simnet.callPublicFn('adam-swap', 'unpause', [], deployer);
-    expect(simnet.callReadOnlyFn('adam-swap', 'is-paused', [], deployer).result).toBeOk(Cl.bool(false));
+    simnet.callPublicFn('adam-swap-v3', 'unpause', [], deployer);
+    expect(simnet.callReadOnlyFn('adam-swap-v3', 'is-paused', [], deployer).result).toBeOk(Cl.bool(false));
   });
 });
