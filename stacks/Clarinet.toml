@@ -36,6 +36,16 @@ path = "contracts/usdcx.clar"
 clarity_version = 2
 epoch = 2.5
 
+[contracts.usdcx-v2]
+path = "contracts/usdcx-v2.clar"
+clarity_version = 2
+epoch = 2.5
+
+[contracts.usdcx-v3]
+path = "contracts/usdcx-v3.clar"
+clarity_version = 2
+epoch = 2.5
+
 [contracts.adam-swap]
 path = "contracts/adam-swap.clar"
 clarity_version = 2
@@ -68,11 +78,11 @@ path = "contracts/adam-token.clar"
 clarity_version = 2
 epoch = 2.5
 
-[contracts.adam-swap-v2]
-path = "contracts/adam-swap.clar"
+[contracts.adam-swap-v3]
+path = "contracts/adam-swap-v3.clar"
 clarity_version = 2
 epoch = 2.5
-depends_on = ["adam-token-adusd-v2", "adam-token-adngn-v2", "adam-token-adkes-v2", "adam-token-adghs-v2", "adam-token-adzar-v2"]
+depends_on = ["adam-token-adusd-v2", "adam-token-adngn-v2", "adam-token-adkes-v2", "adam-token-adghs-v2", "adam-token-adzar-v2", "usdcx-v3"]
 
 [repl.analysis]
 passes = ["check_checker"]
