@@ -1,22 +1,26 @@
-# Adam Protocol Contracts
+# Adam Protocol - Starknet Contracts
 
-Scarb workspace containing three Cairo 2.x smart contracts for the Adam Protocol, a privacy-first stablecoin system on Starknet.
+Privacy-first stablecoin contracts on Starknet using STARK-based zero-knowledge proofs.
+
+> [!NOTE]
+> **Privacy Implementation**: This is the Starknet implementation with full privacy features using zero-knowledge proofs and commitment schemes. For transparent, Bitcoin-secured stablecoins, see the Stacks implementation at `../stacks/README.md`.
 
 ## Workspace Structure
 
 ```
-adam-contract/
+adam-contract/starknet/
 ├── Scarb.toml                  # Workspace root
 ├── package.json                # Script dependencies (Starknet.js)
 ├── scripts/
 │   └── deploy.ts               # Deployment script
 └── packages/
     ├── adam_token/             # ERC-20 (deployed as ADUSD & ADNGN)
-    ├── adam_pool/              # Nullifier registry (double-spend prevention)
-    └── adam_swap/              # Buy / Sell / Swap logic
+    ├── adam_pool/              # Nullifier registry (privacy layer)
+    └── adam_swap/              # Buy / Sell / Swap with commitments
 ```
 
 > [!NOTE]
+> All shared logic (errors, events, interfaces) has been inlined into each package to ensure they are self-contained and modular.
 > All shared logic (errors, events, interfaces) has been inlined into each package to ensure they are self-contained and modular.
 
 ## Contracts

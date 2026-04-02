@@ -1,6 +1,9 @@
 # Adam Protocol - Stacks Contracts
 
-Privacy-first stablecoin system on Stacks blockchain, implementing the same architecture as the Starknet deployment.
+Bitcoin-secured transparent stablecoin system on Stacks blockchain.
+
+> [!NOTE]
+> **Privacy vs Transparency**: Unlike the Starknet implementation which uses zero-knowledge proofs for privacy, the Stacks implementation provides transparent, Bitcoin-secured stablecoins. Transaction amounts are visible on-chain, providing regulatory clarity while leveraging Bitcoin's security.
 
 ## Overview
 
@@ -38,6 +41,8 @@ adam-contract/stacks/
 
 Standard SIP-010 fungible token with role-based access control. Deployed multiple times for different currencies (ADUSD, ADNGN, ADKES, ADGHS, ADZAR).
 
+**Transparency Note**: All balances and transfers are visible on-chain, providing regulatory clarity and Bitcoin-level security.
+
 **Roles:**
 - `contract-owner` - Can grant/revoke roles, upgrade contract
 - `minter` - Can mint new tokens (typically AdamSwap contract)
@@ -49,28 +54,18 @@ Standard SIP-010 fungible token with role-based access control. Deployed multipl
 - `transfer` - Standard SIP-010 transfer
 - `get-balance` - Check token balance
 
-### AdamPool
-
-Nullifier registry that prevents double-spending through commitment tracking.
-
-**Key Functions:**
-- `register-commitment` - Record a new commitment (swap contract only)
-- `spend-nullifier` - Mark a nullifier as spent (swap contract only)
-- `is-commitment-registered` - Check if commitment exists
-- `is-nullifier-spent` - Check if nullifier was used
-
 ### AdamSwap
 
-Core exchange contract handling all buy/sell/swap operations with privacy-preserving commitments.
+Core exchange contract handling all buy/sell/swap operations.
 
 **Key Functions:**
-- `buy` - Purchase Adam stablecoins with USDC
+- `buy` - Purchase Adam stablecoins with USDC (amounts visible on-chain)
 - `sell` - Redeem Adam stablecoins (triggers backend offramp)
 - `swap` - Exchange between Adam stablecoins (e.g., ADUSD ↔ ADNGN)
 - `set-rate` - Update exchange rates (rate-setter only)
 
-**Privacy:**
-All operations emit only commitment/nullifier hashes, never amounts. Amounts are computed client-side using Pedersen commitments.
+**Transparency:**
+All operations emit transaction amounts on-chain. This provides regulatory clarity and allows for standard blockchain explorers to track transactions. No privacy layer is implemented on Stacks.
 
 ## Development
 
@@ -169,9 +164,10 @@ After deploying all contracts, you need to configure roles and permissions:
 
 - All contracts are immutable once deployed
 - Role-based access control protects critical functions
-- Nullifier registry prevents double-spending
-- Privacy preserved through commitment-only events
+- Bitcoin-secured through Stacks blockchain
+- Transparent transactions for regulatory compliance
 - Rate updates require dedicated rate-setter role
+- No privacy features - all amounts visible on-chain
 
 ## License
 

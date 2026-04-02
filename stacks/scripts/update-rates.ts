@@ -118,7 +118,7 @@ async function setRate(
         functionArgs: [
             contractPrincipalCV(address, fromContract),
             contractPrincipalCV(address, toContract),
-            uintCV(rate),
+            uintCV(parseInt(rate)),
         ],
         senderKey: privateKey,
         network,

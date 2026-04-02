@@ -240,7 +240,7 @@ async function main() {
       [
         contractPrincipalCV(address, config.from),
         contractPrincipalCV(address, config.to),
-        uintCV(config.rate),
+        uintCV(parseInt(config.rate)),
       ],
       privateKey,
       address
