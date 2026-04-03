@@ -15,7 +15,8 @@
     "usdcx:deploy": "tsx scripts/usdcx-manager.ts deploy",
     "usdcx:mint": "tsx scripts/usdcx-manager.ts mint",
     "usdcx:balance": "tsx scripts/usdcx-manager.ts balance",
-    "usdcx:quick": "tsx scripts/usdcx-manager.ts quick-setup"
+    "usdcx:quick": "tsx scripts/usdcx-manager.ts quick-setup",
+    "mint-usdcx-v3": "tsx scripts/mint-usdcx-v3.ts"
   },
   "keywords": [],
   "author": "",
