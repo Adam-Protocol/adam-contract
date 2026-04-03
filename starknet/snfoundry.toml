@@ -1,0 +1,16 @@
+[sncast.default]
+# Use STRK as the gas token instead of ETH
+# This allows paying for gas with STRK tokens
+account = "caxtonstone1"
+url = "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/5QQMV6kqa3iDaH_EbNhTw"
+
+[sncast.sepolia]
+account = "caxtonstone1"
+url = "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/5QQMV6kqa3iDaH_EbNhTw"
+
+[snforge.default]
+# Build external contracts for testing
+build-external-contracts = [
+    "packages/adam-token::AdamToken",
+    "packages/adam-pool::AdamPool",
+]
