@@ -12,10 +12,7 @@ pub mod AdamSwap {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
-    use openzeppelin::token::erc20::interface::{
-        IERC20Dispatcher, IERC20DispatcherTrait, IERC20MetadataDispatcher,
-        IERC20MetadataDispatcherTrait,
-    };
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::storage::{
@@ -365,26 +362,12 @@ pub mod AdamSwap {
             let rate = self.rates.read((token_from, token_to));
             assert(rate > 0, Errors::RATE_NOT_SET);
 
-            // Fetch decimals to handle scaling differences (e.g. USDC 6 -> ADNGN 18)
-            let decimals_from = IERC20MetadataDispatcher { contract_address: token_from }
-                .decimals();
-            let decimals_to = IERC20MetadataDispatcher { contract_address: token_to }.decimals();
-
+            // Rate is stored with 1e18 precision and includes decimal adjustments
+            // Simply divide by RATE_PRECISION to get the output amount
             let gross_out = (amount_in * rate) / RATE_PRECISION;
 
-            // Adjust for decimal differences
-            let scaled_gross_out = if decimals_to > decimals_from {
-                let diff = decimals_to - decimals_from;
-                gross_out * self._pow10(diff)
-            } else if decimals_to < decimals_from {
-                let diff = decimals_from - decimals_to;
-                gross_out / self._pow10(diff)
-            } else {
-                gross_out
-            };
-
             let fee_bps: u256 = self.fee_bps.read().into();
-            scaled_gross_out - (scaled_gross_out * fee_bps) / 10000_u256
+            gross_out - (gross_out * fee_bps) / 10000_u256
         }
 
         /// Internal helper for base-10 powers
