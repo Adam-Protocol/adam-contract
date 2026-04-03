@@ -37,6 +37,7 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, ContractAddres
     usdc_name.serialize(ref usdc_calldata);
     usdc_symbol.serialize(ref usdc_calldata);
     owner().serialize(ref usdc_calldata);
+    6_u8.serialize(ref usdc_calldata); // USDC decimals = 6
     let (usdc_address, _) = token_class.deploy(@usdc_calldata).unwrap_syscall();
 
     // 1. Deploy AdamToken (ADUSD)
@@ -46,6 +47,7 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, ContractAddres
     adusd_name.serialize(ref adusd_calldata);
     adusd_symbol.serialize(ref adusd_calldata);
     owner().serialize(ref adusd_calldata);
+    18_u8.serialize(ref adusd_calldata); // Adam tokens decimals = 18
     let (adusd_address, _) = token_class.deploy(@adusd_calldata).unwrap_syscall();
 
     // 2. Deploy AdamToken (ADNGN)
@@ -55,6 +57,7 @@ fn setup() -> (ContractAddress, ContractAddress, ContractAddress, ContractAddres
     adngn_name.serialize(ref adngn_calldata);
     adngn_symbol.serialize(ref adngn_calldata);
     owner().serialize(ref adngn_calldata);
+    18_u8.serialize(ref adngn_calldata);
     let (adngn_address, _) = token_class.deploy(@adngn_calldata).unwrap_syscall();
 
     // 3. Deploy AdamPool
@@ -231,7 +234,7 @@ fn test_buy() {
     let adusd = IERC20Dispatcher { contract_address: adusd_addr };
     let pool = IAdamPoolDispatcher { contract_address: pool_addr };
 
-    let amount_in: u256 = 100 * RATE_PRECISION;
+    let amount_in: u256 = 100 * 1_000_000; // 100 USDC (6 decimals)
     let commitment: felt252 = 0x999;
 
     // Mint USDC to Alice
@@ -250,15 +253,15 @@ fn test_buy() {
 
     // Verify treasury got the USDC
     assert(usdc.balance_of(treasury()) == amount_in, 'treasury balance wrong');
-    // Verify Alice got ADUSD 
-    assert(adusd.balance_of(alice()) == amount_in, 'alice balance wrong');
+    // Verify Alice got ADUSD (100 * 10^18)
+    assert(adusd.balance_of(alice()) == 100 * RATE_PRECISION, 'alice balance wrong');
     // Verify pool registered commitment
     assert(pool.is_commitment_registered(commitment), 'commitment not registered');
 }
 
 #[test]
 fn test_sell() {
-    let (swap_addr, adusd_addr, _, pool_addr, usdc_addr) = setup();
+    let (swap_addr, adusd_addr, _, pool_addr, _usdc_addr) = setup();
     let swap = IAdamSwapDispatcher { contract_address: swap_addr };
     let adusd = IERC20Dispatcher { contract_address: adusd_addr };
     let pool = IAdamPoolDispatcher { contract_address: pool_addr };
@@ -293,7 +296,7 @@ fn test_sell() {
 
 #[test]
 fn test_swap() {
-    let (swap_addr, adusd_addr, adngn_addr, pool_addr, usdc_addr) = setup();
+    let (swap_addr, adusd_addr, adngn_addr, pool_addr, _usdc_addr) = setup();
     let swap = IAdamSwapDispatcher { contract_address: swap_addr };
     let adusd = IERC20Dispatcher { contract_address: adusd_addr };
     let adngn = IERC20Dispatcher { contract_address: adngn_addr };

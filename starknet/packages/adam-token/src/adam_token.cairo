@@ -8,12 +8,17 @@ pub const UPGRADER_ROLE: felt252 = selector!("UPGRADER_ROLE");
 pub mod AdamToken {
     // OpenZeppelin imports for standard token functionality and security
     use core::num::traits::Zero;
+    use openzeppelin::access::accesscontrol::AccessControlComponent::InternalTrait as AccessControlInternalTrait;
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
+    use openzeppelin::security::pausable::PausableComponent::InternalTrait as PausableInternalTrait;
+    use openzeppelin::token::erc20::ERC20Component::InternalTrait as ERC20InternalTrait;
+    use openzeppelin::token::erc20::interface::IERC20Metadata;
     use openzeppelin::token::erc20::{DefaultConfig, ERC20Component};
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use starknet::{ClassHash, ContractAddress};
     use crate::errors::Errors;
     use super::{BURNER_ROLE, MINTER_ROLE, PAUSER_ROLE, UPGRADER_ROLE};
@@ -25,8 +30,6 @@ pub mod AdamToken {
     component!(path: SRC5Component, storage: src5, event: SRC5Event);
     component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
 
-    #[abi(embed_v0)]
-    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
     #[abi(embed_v0)]
     impl PausableImpl = PausableComponent::PausableImpl<ContractState>;
     #[abi(embed_v0)]
@@ -55,6 +58,8 @@ pub mod AdamToken {
         // Upgradeable contract state
         #[substorage(v0)]
         upgradeable: UpgradeableComponent::Storage,
+        // Custom decimals
+        decimals: u8,
     }
 
     #[event]
@@ -74,10 +79,15 @@ pub mod AdamToken {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, name: ByteArray, symbol: ByteArray, owner: ContractAddress,
+        ref self: ContractState,
+        name: ByteArray,
+        symbol: ByteArray,
+        owner: ContractAddress,
+        decimals: u8,
     ) {
         assert(!owner.is_zero(), Errors::ZERO_ADDRESS);
 
+        // Initialize ERC20 and AccessControl components
         // Initialize ERC20 and AccessControl components
         self.erc20.initializer(name, symbol);
         self.accesscontrol.initializer();
@@ -87,6 +97,50 @@ pub mod AdamToken {
         self.accesscontrol._grant_role(MINTER_ROLE, owner);
         self.accesscontrol._grant_role(PAUSER_ROLE, owner);
         self.accesscontrol._grant_role(UPGRADER_ROLE, owner);
+
+        self.decimals.write(decimals);
+    }
+
+    #[abi(embed_v0)]
+    impl ERC20MetadataImpl of IERC20Metadata<ContractState> {
+        fn name(self: @ContractState) -> ByteArray {
+            self.erc20.name()
+        }
+        fn symbol(self: @ContractState) -> ByteArray {
+            self.erc20.symbol()
+        }
+        fn decimals(self: @ContractState) -> u8 {
+            self.decimals.read()
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl ERC20Impl of openzeppelin::token::erc20::interface::IERC20<ContractState> {
+        fn total_supply(self: @ContractState) -> u256 {
+            self.erc20.total_supply()
+        }
+        fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
+            self.erc20.balance_of(account)
+        }
+        fn allowance(
+            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
+        ) -> u256 {
+            self.erc20.allowance(owner, spender)
+        }
+        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
+            self.erc20.transfer(recipient, amount)
+        }
+        fn transfer_from(
+            ref self: ContractState,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256,
+        ) -> bool {
+            self.erc20.transfer_from(sender, recipient, amount)
+        }
+        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
+            self.erc20.approve(spender, amount)
+        }
     }
 
     impl ERC20HooksImpl of ERC20Component::ERC20HooksTrait<ContractState> {

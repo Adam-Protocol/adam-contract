@@ -12,7 +12,10 @@ pub mod AdamSwap {
     use openzeppelin::access::accesscontrol::{AccessControlComponent, DEFAULT_ADMIN_ROLE};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::security::pausable::PausableComponent;
-    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        IERC20Dispatcher, IERC20DispatcherTrait, IERC20MetadataDispatcher,
+        IERC20MetadataDispatcherTrait,
+    };
     use openzeppelin::upgrades::UpgradeableComponent;
     use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::storage::{
@@ -212,8 +215,9 @@ pub mod AdamSwap {
             assert(amount_out >= min_amount_out, Errors::SLIPPAGE_EXCEEDED);
 
             let pool = IAdamPoolDispatcher { contract_address: self.pool_address.read() };
-            
-            // In a private swap, we spend an existing note (nullifier) and create a new one (commitment)
+
+            // In a private swap, we spend an existing note (nullifier) and create a new one
+            // (commitment)
             pool.spend_nullifier(nullifier, proof, array![commitment].span());
 
             IAdamTokenDispatcher { contract_address: token_in }.burn(caller, amount_in);
@@ -360,9 +364,38 @@ pub mod AdamSwap {
         ) -> u256 {
             let rate = self.rates.read((token_from, token_to));
             assert(rate > 0, Errors::RATE_NOT_SET);
+
+            // Fetch decimals to handle scaling differences (e.g. USDC 6 -> ADNGN 18)
+            let decimals_from = IERC20MetadataDispatcher { contract_address: token_from }
+                .decimals();
+            let decimals_to = IERC20MetadataDispatcher { contract_address: token_to }.decimals();
+
             let gross_out = (amount_in * rate) / RATE_PRECISION;
+
+            // Adjust for decimal differences
+            let scaled_gross_out = if decimals_to > decimals_from {
+                let diff = decimals_to - decimals_from;
+                gross_out * self._pow10(diff)
+            } else if decimals_to < decimals_from {
+                let diff = decimals_from - decimals_to;
+                gross_out / self._pow10(diff)
+            } else {
+                gross_out
+            };
+
             let fee_bps: u256 = self.fee_bps.read().into();
-            gross_out - (gross_out * fee_bps) / 10000_u256
+            scaled_gross_out - (scaled_gross_out * fee_bps) / 10000_u256
+        }
+
+        /// Internal helper for base-10 powers
+        fn _pow10(self: @ContractState, exp: u8) -> u256 {
+            let mut res: u256 = 1;
+            let mut i: u8 = 0;
+            while i < exp {
+                res *= 10;
+                i += 1;
+            }
+            res
         }
 
         fn _is_valid_adam_token(self: @ContractState, token: ContractAddress) -> bool {
