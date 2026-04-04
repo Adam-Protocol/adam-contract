@@ -146,8 +146,8 @@
     (asserts! (not (is-eq caller treasury)) ERR-SAME-ADDRESS)
 
     (let ((amount-out (try! (apply-rate-and-fee token-in token-out amount-in))))
-      ;; Transfer USDC from caller to treasury
-      (try! (contract-call? .usdcx-v3 transfer amount-in caller treasury none))
+      ;; Transfer USDC from caller to treasury using transfer-from (requires prior approval)
+      (try! (contract-call? .usdcx-v3 transfer-from amount-in caller treasury))
 
       ;; Mint Adam tokens based on token-out
       (try! (mint-adam-token token-out amount-out caller))
